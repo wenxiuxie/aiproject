@@ -1,0 +1,470 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 3 课 · 排版与聊天气泡</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Noto+Serif+SC:wght@700&family=JetBrains+Mono&display=swap">
+<style>
+:root{--bg:#f6f7f5;--paper:#fff;--fg:#1d2520;--muted:#5d6a62;--line:#dde3de;--ink:#b4232f;--ink-soft:#fbe9ea;--code:#eef2ef;--ok:#1f7a4d;--ok-soft:#e3f4ea;--blue:#2f5f9e;--blue-soft:#e8eff8;--hard:#8a5a00;--hard-soft:#fdf3dc;
+--display:"Noto Serif SC","Songti SC",serif;--body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;--mono:"JetBrains Mono",Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#141a17;--paper:#1b231f;--fg:#e4ebe6;--muted:#9aa8a0;--line:#2c3832;--ink:#f0707a;--ink-soft:#3a1f22;--code:#111714;--ok:#5fd39a;--ok-soft:#173326;--blue:#8db4ea;--blue-soft:#1a2738;--hard:#f0c060;--hard-soft:#33290f;color-scheme:dark}}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.75;margin:0}
+.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .in{max-width:820px;margin:0 auto;padding:8px 16px}
+.top .row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.top .row b{color:var(--fg)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 4px}
+.chips button{font:inherit;font-size:12px;padding:1px 9px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--muted);cursor:pointer}
+.chips button.now{border-color:var(--ink);color:var(--ink);font-weight:700}
+.chips button.past{color:var(--ok);border-color:var(--ok)}
+.bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink);width:0;transition:width .25s}
+.wrap{max-width:820px;margin:0 auto;padding:22px 16px 120px}
+.screen{display:none}
+.screen.show{display:block}
+h1{font-family:var(--display);font-size:30px;line-height:1.3;margin:0 0 8px}
+h2{font-family:var(--display);font-size:24px;margin:0 0 10px}
+h3{font-size:17px;margin:22px 0 6px}
+.kicker{font-size:12px;letter-spacing:.08em;color:var(--ink);font-weight:700;margin:0 0 4px}
+.story p{font-size:17px}
+.mission{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--ink);border-radius:8px;padding:12px 16px;margin:18px 0}
+.route{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px;margin:10px 0}
+.route div{font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+.route div b{font-family:var(--mono);color:var(--ink);margin-right:4px}
+.route div.now{border-color:var(--ink)}
+pre{background:var(--code);font-family:var(--mono);font-size:14px;line-height:1.6;padding:12px 14px;border-radius:6px;overflow-x:auto;margin:10px 0}
+code{font-family:var(--mono);font-size:.92em;background:var(--code);padding:1px 5px;border-radius:4px}
+pre code{background:none;padding:0}
+pre b{color:var(--ink)}
+img.shot{display:block;max-width:100%;border:1px solid var(--line);border-radius:6px;margin:8px 0 4px;background:#fff}
+img.shot.narrow{max-width:420px}
+.cap{font-size:13px;color:var(--muted);margin:0 0 12px}
+.note{background:var(--blue-soft);border-radius:6px;padding:10px 14px;margin:12px 0;font-size:15px}
+.hard{background:var(--hard-soft);border-radius:6px;padding:10px 14px;margin:14px 0;font-size:15px}
+.hard .t{font-weight:700;color:var(--hard);margin:0 0 4px}
+.hard pre{background:var(--paper)}
+table{border-collapse:collapse;margin:10px 0;font-size:15px;width:100%}
+td,th{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--paper);white-space:nowrap}
+.tbl{overflow-x:auto}
+.q .qh{font-weight:700;font-size:18px;margin:0 0 8px;display:flex;gap:10px;flex-wrap:wrap;align-items:baseline}
+.q .qh .n{font-family:var(--mono);color:var(--ink)}
+.q .qh .st{font-size:13px;color:var(--muted);font-weight:400}
+.opts{display:grid;gap:8px;margin:12px 0 0}
+.opts button{font:inherit;text-align:left;padding:10px 14px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--fg);cursor:pointer}
+.opts button:hover{border-color:var(--blue)}
+.opts button.right{border-color:var(--ok);background:var(--ok-soft)}
+.opts button.wrong{border-color:var(--ink);background:var(--ink-soft)}
+.fb{margin:12px 0 0;font-size:15px;min-height:1.5em}
+.fb.ok{color:var(--ok)}.fb.no{color:var(--ink)}
+.reveal{font:inherit;font-size:14px;margin:12px 0 0;padding:6px 14px;border:1px solid var(--blue);color:var(--blue);background:transparent;border-radius:6px;cursor:pointer}
+.ans{display:none;margin-top:10px;border-left:3px solid var(--ok);padding:2px 0 2px 12px}
+.ans.show{display:block}
+.ans .lab{font-size:12px;letter-spacing:.06em;color:var(--ok);font-weight:700;margin:0}
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);z-index:5}
+.nav .in{max-width:820px;margin:0 auto;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.nav button{font:inherit;font-size:15px;padding:8px 20px;border-radius:6px;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--fg)}
+.nav button.go{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+.nav button:disabled{opacity:.4;cursor:not-allowed}
+.nav .hint{font-size:13px;color:var(--muted);text-align:center;flex:1}
+.stepintro{font-size:17px}
+.big{font-size:40px;margin:0}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="in">
+  <div class="row"><span><b>第 3 课</b> · 排版与聊天气泡</span><span>选择题一次答对：<b id="scoreOk">0</b> / <b id="scoreAll">0</b></span></div>
+  <div class="chips" id="chips"></div>
+  <div class="bar"><i id="bar"></i></div>
+</div></div>
+
+<div class="wrap" id="screens">
+
+<!-- ======================= 任务 ======================= -->
+<section class="screen" data-step="任务">
+  <p class="kicker">第 3 课任务</p>
+  <h2>排版与聊天气泡</h2>
+  <p>上一课的按钮能响应点击了，但所有组件竖着排成一列，而且只能看到最后一个问题。这一课学排版：按钮横着排，问答区放进卡片，每个问题和回答都变成一个聊天气泡留在记录里，再加一个"新游戏"按钮清空记录。</p>
+  <img class="shot" src="第3课_图/final.png" alt="本课完成后的界面">
+  <p class="cap">本课完成后：点了"食物"，问了一个问题，又猜了一次（真实运行截图）</p>
+  <div class="tbl"><table>
+    <tr><th>步骤</th><th>做什么</th><th>新学的代码</th></tr>
+    <tr><td>第 1 步</td><td>按钮横着排</td><td><code>with ui.row():</code></td></tr>
+    <tr><td>第 2 步</td><td>调整大小、宽度、颜色</td><td><code>.classes()</code>、<code>.props()</code></td></tr>
+    <tr><td>第 3 步</td><td>卡片和聊天气泡</td><td><code>ui.card</code>、<code>ui.chat_message</code></td></tr>
+    <tr><td>第 4 步</td><td>点击后往聊天区加气泡</td><td><code>with chat:</code>、<code>chat.clear()</code></td></tr>
+    <tr><td>第 5 步</td><td>排错</td><td>常见错误</td></tr>
+  </table></div>
+</section>
+
+<!-- ======================= 第 1 步 ======================= -->
+<section class="screen" data-step="第1步">
+  <p class="kicker">第 1 步 · 横着排</p>
+  <h2>容器：<code>ui.row</code> 和 <code>ui.column</code></h2>
+  <p><b>容器</b>是用来装其他组件的组件。组件放进哪个容器，就按那个容器的方式排列。</p>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th><th>英文意思</th></tr>
+    <tr><td><code>with ui.row():</code></td><td>下面缩进的组件<b>横着</b>排成一行</td><td>row = 行</td></tr>
+    <tr><td><code>with ui.column():</code></td><td>下面缩进的组件<b>竖着</b>排成一列</td><td>column = 列</td></tr>
+  </table></div>
+  <pre><code>ui.label("竖着排（默认）：")
+for c in ["动物", "食物", "物品"]:
+    ui.button(c)
+
+ui.label("放进 ui.row()，横着排：")
+<b>with ui.row():</b>
+    for c in ["动物", "食物", "物品"]:
+        ui.button(c)</code></pre>
+  <img class="shot" src="第3课_图/row.png" alt="竖排和横排对比">
+  <div class="hard">
+    <p class="t">难点：哪些组件在容器里？</p>
+    <p style="margin:0">和 <code>for</code>、<code>if</code> 一样，<code>with</code> 下面<b>缩进</b>的代码属于它，取消缩进就出了容器。例子：</p>
+    <pre><code>with ui.row():
+    ui.button("提问")        # 在 row 里
+    ui.button("我猜是它")    # 在 row 里
+ui.button("新游戏")          # 不缩进：在 row 外面，另起一行</code></pre>
+  </div>
+</section>
+
+<section class="screen" data-step="第1步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q1</span>下面的代码，网页上有几行？</p>
+  <pre><code>ui.label("猜猜我是谁")
+with ui.row():
+    ui.button("动物")
+    ui.button("食物")
+with ui.row():
+    ui.button("提问")
+    ui.button("我猜是它")
+    ui.button("新游戏")</code></pre>
+  <div class="opts">
+    <button>A. 2 行</button>
+    <button data-right>B. 3 行：标题 / 动物、食物 / 提问、我猜是它、新游戏</button>
+    <button>C. 6 行，每个组件一行</button>
+  </div>
+  <p class="fb" data-ok="对！标题单独一行，每个 ui.row() 是一行，里面的按钮横着排。" data-no="每个 with ui.row(): 会生成一行，标题不在任何 row 里。"></p>
+</div></section>
+
+<!-- ======================= 第 2 步 ======================= -->
+<section class="screen" data-step="第2步">
+  <p class="kicker">第 2 步 · 样式</p>
+  <h2><code>.classes()</code> 和 <code>.props()</code></h2>
+  <p>在组件后面接 <code>.classes("...")</code> 或 <code>.props("...")</code>，可以改变它的样子。</p>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th></tr>
+    <tr><td><code>.classes("text-3xl font-bold")</code></td><td>字号变大（3xl）、加粗</td></tr>
+    <tr><td><code>.classes("w-full")</code></td><td>宽度占满所在的容器（w = width 宽度）</td></tr>
+    <tr><td><code>.classes("max-w-xl mx-auto")</code></td><td>最大宽度限制在中等大小，并左右居中</td></tr>
+    <tr><td><code>.props("outlined")</code></td><td>输入框带边框</td></tr>
+    <tr><td><code>.props("color=orange")</code></td><td>按钮变成橙色</td></tr>
+  </table></div>
+  <pre><code>ui.label("猜猜我是谁")
+ui.label("猜猜我是谁")<b>.classes("text-3xl font-bold")</b>
+ui.input(placeholder="输入问题，例如：它会飞吗？")
+ui.input(placeholder="输入问题，例如：它会飞吗？")<b>.classes("w-full").props("outlined")</b>
+ui.button("我猜是它")<b>.props("color=orange")</b></code></pre>
+  <img class="shot" src="第3课_图/style.png" alt="加样式前后对比">
+  <p class="cap">第 1、3 行没加样式，第 2、4、5 行加了。第 1 课里输入框太窄的问题，用 <code>w-full</code> 解决了</p>
+  <div class="hard">
+    <p class="t">难点：<code>.classes</code> 和 <code>.props</code> 有什么区别？</p>
+    <p style="margin:0"><code>.classes</code> 设置<b>通用样式</b>（大小、宽度、间距、文字颜色），对任何组件都适用；<code>.props</code> 设置<b>组件自己的选项</b>，比如输入框的 <code>outlined</code>、按钮的 <code>color</code>，换一种组件就不一定有。多个样式写在同一个字符串里，<b>用空格隔开</b>。</p>
+  </div>
+</section>
+
+<section class="screen" data-step="第2步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q2</span>想让标题字号变大、加粗，并且是紫色。哪一种写法是对的？</p>
+  <div class="opts">
+    <button>A. <code>ui.label("猜猜我是谁").classes("text-3xl").classes("font-bold, text-purple-700")</code></button>
+    <button data-right>B. <code>ui.label("猜猜我是谁").classes("text-3xl font-bold text-purple-700")</code></button>
+    <button>C. <code>ui.label("猜猜我是谁", "text-3xl font-bold text-purple-700")</code></button>
+  </div>
+  <p class="fb" data-ok="对！多个样式写在同一个 .classes() 里，用空格隔开，不用逗号。" data-no="样式之间用什么隔开？要写在哪里？"></p>
+</div></section>
+
+<!-- ======================= 第 3 步 ======================= -->
+<section class="screen" data-step="第3步">
+  <p class="kicker">第 3 步 · 卡片和聊天气泡</p>
+  <h2><code>ui.card</code> 和 <code>ui.chat_message</code></h2>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th><th>英文意思</th></tr>
+    <tr><td><code>with ui.card():</code></td><td>白色带阴影的卡片，也是一个容器</td><td>card = 卡片</td></tr>
+    <tr><td><code>ui.chat_message("文字", name="AI")</code></td><td>一个聊天气泡，<code>name</code> 是气泡上方的名字</td><td>chat message = 聊天消息</td></tr>
+    <tr><td><code>sent=True</code></td><td>表示这条是"我发出的"，气泡样式和收到的不同</td><td>sent = 已发送</td></tr>
+  </table></div>
+  <pre><code>with ui.card().classes("w-full"):
+    ui.chat_message("我想好了一个东西，问我吧！", name="AI")
+    ui.chat_message("它会飞吗？", name="我", sent=True)</code></pre>
+  <img class="shot" src="第3课_图/bubble.png" alt="卡片里的两个聊天气泡">
+  <p class="cap">收到的消息是绿色、尖角在左下；<code>sent=True</code> 的是灰色、尖角在右下</p>
+</section>
+
+<section class="screen" data-step="第3步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q3</span><code>sent=True</code> 里的 <code>True</code> 是什么？</p>
+  <div class="opts">
+    <button>A. 一个字符串，也可以写成 "True"</button>
+    <button data-right>B. 布尔值（真），和 if 条件的结果是同一种东西</button>
+    <button>C. 一个变量名，要先定义</button>
+  </div>
+  <p class="fb" data-ok="对！True / False 是布尔值，首字母必须大写。sent=True 也是关键字参数，和第 1 课的 placeholder= 一样。" data-no="if 3 > 2: 里的条件，计算结果是什么？"></p>
+</div></section>
+
+<!-- ======================= 第 4 步 ======================= -->
+<section class="screen" data-step="第4步">
+  <p class="kicker">第 4 步 · 点击后往聊天区加气泡</p>
+  <h2>运行中往容器里加组件</h2>
+  <p>先建一个空的容器 <code>chat</code> 当聊天区。点击按钮时，在函数里用 <code>with chat:</code> 把新气泡放进去。</p>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th><th>英文意思</th></tr>
+    <tr><td><code>chat = ui.column()</code></td><td>空的竖排容器，存进变量 <code>chat</code></td><td></td></tr>
+    <tr><td><code>with chat:</code></td><td>接下来生成的组件放进 <code>chat</code></td><td></td></tr>
+    <tr><td><code>chat.clear()</code></td><td>删除 <code>chat</code> 里的所有组件</td><td>clear = 清空</td></tr>
+  </table></div>
+  <p>"我说一句""AI 说一句"会用很多次，写成一个函数 <code>say</code>：</p>
+  <pre><code>def say(mine, text):
+    with chat:
+        if mine:
+            ui.chat_message(text, name="我", sent=True)
+        else:
+            ui.chat_message(text, name="AI")
+
+def ask():
+    q = box.value
+    if q == "":
+        ui.notify("请先输入问题")
+    else:
+        questions.append(q)
+        <b>say(True, q)
+        say(False, f"（AI 还没接上，第 5 课再来回答。你已经问了 {len(questions)} 个问题）")</b>
+        box.value = ""</code></pre>
+  <div class="hard">
+    <p class="t">难点：忘了写 <code>with chat:</code></p>
+    <p style="margin:0">在点击函数里生成的组件，如果没有说放进哪个容器，就会出现在<b>被点击的按钮所在的容器</b>里。例子：去掉 <code>with chat:</code>，气泡跑到了"提问"按钮旁边：</p>
+    <img class="shot" src="第3课_图/nowith.png" alt="气泡跑到按钮旁边">
+  </div>
+</section>
+
+<section class="screen" data-step="第4步"><div class="q">
+  <p class="qh"><span class="n">Q4</span>动手写：在"我猜是它"旁边加一个"新游戏"按钮。点击后清空聊天区和问题列表，然后 AI 说"我又想好了一个东西，问我吧！"</p>
+  <img class="shot" src="第3课_图/newgame.png" alt="点新游戏后的界面">
+  <p class="cap">问了一个问题后点"新游戏"，聊天区只剩下新的一句</p>
+  <button class="reveal">看答案</button>
+  <div class="ans"><p class="lab">参考答案</p><pre><code>def new_game():
+    chat.clear()
+    questions.clear()
+    say(False, "我又想好了一个东西，问我吧！")
+
+# 卡片里的按钮行，加上第三个按钮：
+        with ui.row():
+            ui.button("提问", on_click=ask)
+            ui.button("我猜是它", on_click=guess).props("color=orange")
+            ui.button("新游戏", on_click=new_game)</code></pre>
+  <p>列表也有 <code>.clear()</code>，作用一样：清空里面的所有元素。</p></div>
+</div></section>
+
+<section class="screen" data-step="第4步">
+  <p class="kicker">第 4 步 · 本课完整代码</p>
+  <h2>把所有组件放进布局</h2>
+  <p>最外层用一个居中的 <code>ui.column</code> 包住所有组件，问答区放进卡片：</p>
+  <pre><code>from nicegui import ui
+
+questions = []
+
+def choose(e):
+    category.text = f"当前类别：{e.sender.text}"
+
+def say(mine, text):
+    with chat:
+        if mine:
+            ui.chat_message(text, name="我", sent=True)
+        else:
+            ui.chat_message(text, name="AI")
+
+def ask():
+    q = box.value
+    if q == "":
+        ui.notify("请先输入问题")
+    else:
+        questions.append(q)
+        say(True, q)
+        say(False, f"（AI 还没接上，第 5 课再来回答。你已经问了 {len(questions)} 个问题）")
+        box.value = ""
+
+def new_game():
+    chat.clear()
+    questions.clear()
+    say(False, "我又想好了一个东西，问我吧！")
+
+def guess():
+    g = box.value
+    if g == "":
+        ui.notify("请先输入你猜的东西")
+    else:
+        say(True, f"我猜：{g}")
+        box.value = ""
+
+<b>with ui.column().classes("w-full max-w-xl mx-auto"):</b>
+    ui.label("猜猜我是谁").classes("text-3xl font-bold")
+    ui.label("我心里想好了一个东西，你来猜！")
+    <b>with ui.row():</b>
+        for c in ["动物", "食物", "物品"]:
+            ui.button(c, on_click=choose)
+    category = ui.label("当前类别：动物")
+    <b>with ui.card().classes("w-full"):</b>
+        <b>chat = ui.column().classes("w-full")</b>
+        box = ui.input(placeholder="输入问题，例如：它会飞吗？").classes("w-full").props("outlined")
+        <b>with ui.row():</b>
+            ui.button("提问", on_click=ask)
+            ui.button("我猜是它", on_click=guess).props("color=orange")
+            ui.button("新游戏", on_click=new_game)
+
+say(False, "我想好了一个东西，问我吧！")
+
+ui.run()</code></pre>
+</section>
+
+<!-- ======================= 第 5 步 ======================= -->
+<section class="screen" data-step="第5步"><div class="q" data-choice>
+  <p class="kicker">第 5 步 · 排错</p>
+  <p class="qh"><span class="n">Q5</span>运行后报错，问题出在哪里？</p>
+  <pre><code>1  from nicegui import ui
+2
+3  with ui.row():
+4      ui.button("提问")
+5          ui.button("我猜是它")</code></pre>
+  <pre><code>  File "guess_who.py", line 5
+    ui.button("我猜是它")
+IndentationError: unexpected indent</code></pre>
+  <div class="opts">
+    <button>A. 一个 row 里只能放一个按钮</button>
+    <button data-right>B. 第 5 行多缩进了一层，应该和第 4 行对齐</button>
+    <button>C. 第 3 行的 with 应该删掉</button>
+  </div>
+  <p class="fb" data-ok="对！IndentationError 是缩进错误，unexpected indent 意思是「这里不该多缩进」。同一个容器里的组件，缩进要对齐。" data-no="IndentationError 说的是哪方面的错误？比较第 4、5 行的开头。"></p>
+</div></section>
+
+<section class="screen" data-step="第5步"><div class="q" data-choice>
+  <p class="kicker">第 5 步 · 排错</p>
+  <p class="qh"><span class="n">Q6</span>运行后报错，应该怎么改？</p>
+  <pre><code>ui.chat_message("它会飞吗？", name="我", sent=true)</code></pre>
+  <pre><code>NameError: name 'true' is not defined. Did you mean: 'True'?</code></pre>
+  <div class="opts">
+    <button>A. 改成 sent="true"</button>
+    <button data-right>B. 改成 sent=True，首字母大写</button>
+    <button>C. 删掉 name="我"</button>
+  </div>
+  <p class="fb" data-ok="对！Python 的布尔值是 True 和 False，首字母大写。小写的 true 被当成了变量名，所以是 NameError。这次 Did you mean 猜对了。" data-no="回想 Q3：True 是什么？大小写有关系吗？"></p>
+</div></section>
+
+<!-- ======================= 完成 ======================= -->
+<section class="screen" data-step="完成">
+  <p class="big">🎉</p>
+  <h2>第 3 课完成</h2>
+  <p>游戏有了完整的布局和聊天记录。选择题一次答对 <b id="finalOk">0</b> / <b id="finalAll">0</b>。</p>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th></tr>
+    <tr><td><code>with ui.row():</code> / <code>with ui.column():</code></td><td>横排 / 竖排容器，缩进的组件在里面</td></tr>
+    <tr><td><code>with ui.card():</code></td><td>卡片容器</td></tr>
+    <tr><td><code>.classes("...")</code> / <code>.props("...")</code></td><td>通用样式 / 组件自己的选项</td></tr>
+    <tr><td><code>ui.chat_message(text, name=..., sent=True)</code></td><td>聊天气泡</td></tr>
+    <tr><td><code>with chat:</code> / <code>chat.clear()</code></td><td>往容器里加组件 / 清空容器</td></tr>
+  </table></div>
+  <div class="mission">
+    <p class="kicker">下一课预告</p>
+    <p style="margin:0">现在界面已经像个游戏了，但电脑心里还没有真正"想好"一个东西，猜什么都没有结果。第 4 课学<b>字典</b>：给每个类别准备谜底，随机选一个，记录剩余机会，判断你猜得对不对。</p>
+  </div>
+</section>
+
+</div>
+
+<div class="nav"><div class="in">
+  <button id="prev">← 上一页</button>
+  <span class="hint" id="hint"></span>
+  <button id="next" class="go">下一页 →</button>
+</div></div>
+
+<script>
+const screens = [...document.querySelectorAll(".screen")];
+const steps = [...new Set(screens.map(s => s.dataset.step))];
+const chips = document.getElementById("chips");
+const prev = document.getElementById("prev"), next = document.getElementById("next"), hint = document.getElementById("hint");
+const choiceQs = document.querySelectorAll("[data-choice]");
+let ok = 0, cur = 0;
+document.getElementById("scoreAll").textContent = choiceQs.length;
+document.getElementById("finalAll").textContent = choiceQs.length;
+
+steps.forEach(name => {
+  const b = document.createElement("button");
+  b.textContent = name;
+  b.onclick = () => go(screens.findIndex(s => s.dataset.step === name));
+  chips.appendChild(b);
+});
+
+choiceQs.forEach(q => {
+  const fb = q.querySelector(".fb");
+  let first = true;
+  q.querySelectorAll(".opts button").forEach(b => {
+    b.onclick = () => {
+      const right = b.hasAttribute("data-right");
+      q.dataset.answered = "1";
+      if (right) {
+        b.classList.add("right");
+        fb.className = "fb ok"; fb.textContent = "✅ " + fb.dataset.ok;
+        if (first) { ok++; document.getElementById("scoreOk").textContent = ok; document.getElementById("finalOk").textContent = ok; }
+      } else {
+        b.classList.add("wrong");
+        fb.className = "fb no"; fb.textContent = "❌ " + fb.dataset.no;
+      }
+      first = false;
+      update();
+    };
+  });
+});
+
+document.querySelectorAll(".reveal").forEach(b => {
+  b.dataset.label = b.textContent;
+  b.onclick = () => {
+    const a = b.nextElementSibling;
+    a.classList.toggle("show");
+    b.textContent = a.classList.contains("show") ? "收起" : b.dataset.label;
+  };
+});
+
+function update() {
+  const s = screens[cur];
+  const q = s.querySelector("[data-choice]");
+  const locked = q && !q.dataset.answered;
+  prev.disabled = cur === 0;
+  next.disabled = locked || cur === screens.length - 1;
+  const isQ = s.querySelector(".q");
+  next.textContent = cur === 0 ? "开始 →" : isQ ? "下一题 →" : "下一页 →";
+  hint.textContent = locked ? "先选一个答案" : `${cur + 1} / ${screens.length}`;
+  const si = steps.indexOf(s.dataset.step);
+  [...chips.children].forEach((c, i) => { c.className = i === si ? "now" : i < si ? "past" : ""; });
+  document.getElementById("bar").style.width = (cur / (screens.length - 1) * 100) + "%";
+}
+
+function go(i) {
+  if (i < 0 || i >= screens.length) return;
+  screens[cur].classList.remove("show");
+  cur = i;
+  screens[cur].classList.add("show");
+  window.scrollTo(0, 0);
+  try { localStorage.setItem("lesson3-pos", cur); } catch (e) {}
+  update();
+}
+
+prev.onclick = () => go(cur - 1);
+next.onclick = () => go(cur + 1);
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" && !next.disabled) go(cur + 1);
+  if (e.key === "ArrowLeft" && !prev.disabled) go(cur - 1);
+});
+
+let start = 0;
+try { start = Math.min(parseInt(localStorage.getItem("lesson3-pos")) || 0, screens.length - 1); } catch (e) {}
+screens[start].classList.add("show"); cur = start; update();
+</script>
+</body>
+</html>

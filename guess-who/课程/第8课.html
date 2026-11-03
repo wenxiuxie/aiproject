@@ -1,0 +1,544 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 8 课 · 完成「猜猜我是谁」</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Noto+Serif+SC:wght@700&family=JetBrains+Mono&display=swap">
+<style>
+:root{--bg:#f6f7f5;--paper:#fff;--fg:#1d2520;--muted:#5d6a62;--line:#dde3de;--ink:#b4232f;--ink-soft:#fbe9ea;--code:#eef2ef;--ok:#1f7a4d;--ok-soft:#e3f4ea;--blue:#2f5f9e;--blue-soft:#e8eff8;--hard:#8a5a00;--hard-soft:#fdf3dc;
+--display:"Noto Serif SC","Songti SC",serif;--body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;--mono:"JetBrains Mono",Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#141a17;--paper:#1b231f;--fg:#e4ebe6;--muted:#9aa8a0;--line:#2c3832;--ink:#f0707a;--ink-soft:#3a1f22;--code:#111714;--ok:#5fd39a;--ok-soft:#173326;--blue:#8db4ea;--blue-soft:#1a2738;--hard:#f0c060;--hard-soft:#33290f;color-scheme:dark}}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.75;margin:0}
+.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .in{max-width:820px;margin:0 auto;padding:8px 16px}
+.top .row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.top .row b{color:var(--fg)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 4px}
+.chips button{font:inherit;font-size:12px;padding:1px 9px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--muted);cursor:pointer}
+.chips button.now{border-color:var(--ink);color:var(--ink);font-weight:700}
+.chips button.past{color:var(--ok);border-color:var(--ok)}
+.bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink);width:0;transition:width .25s}
+.wrap{max-width:820px;margin:0 auto;padding:22px 16px 120px}
+.screen{display:none}
+.screen.show{display:block}
+h1{font-family:var(--display);font-size:30px;line-height:1.3;margin:0 0 8px}
+h2{font-family:var(--display);font-size:24px;margin:0 0 10px}
+h3{font-size:17px;margin:22px 0 6px}
+.kicker{font-size:12px;letter-spacing:.08em;color:var(--ink);font-weight:700;margin:0 0 4px}
+.story p{font-size:17px}
+.mission{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--ink);border-radius:8px;padding:12px 16px;margin:18px 0}
+.route{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px;margin:10px 0}
+.route div{font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+.route div b{font-family:var(--mono);color:var(--ink);margin-right:4px}
+.route div.now{border-color:var(--ink)}
+pre{background:var(--code);font-family:var(--mono);font-size:14px;line-height:1.6;padding:12px 14px;border-radius:6px;overflow-x:auto;margin:10px 0}
+code{font-family:var(--mono);font-size:.92em;background:var(--code);padding:1px 5px;border-radius:4px}
+pre code{background:none;padding:0}
+pre b{color:var(--ink)}
+img.shot{display:block;max-width:100%;border:1px solid var(--line);border-radius:6px;margin:8px 0 4px;background:#fff}
+img.shot.narrow{max-width:420px}
+.cap{font-size:13px;color:var(--muted);margin:0 0 12px}
+.note{background:var(--blue-soft);border-radius:6px;padding:10px 14px;margin:12px 0;font-size:15px}
+.hard{background:var(--hard-soft);border-radius:6px;padding:10px 14px;margin:14px 0;font-size:15px}
+.hard .t{font-weight:700;color:var(--hard);margin:0 0 4px}
+.hard pre{background:var(--paper)}
+table{border-collapse:collapse;margin:10px 0;font-size:15px;width:100%}
+td,th{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--paper);white-space:nowrap}
+.tbl{overflow-x:auto}
+.q .qh{font-weight:700;font-size:18px;margin:0 0 8px;display:flex;gap:10px;flex-wrap:wrap;align-items:baseline}
+.q .qh .n{font-family:var(--mono);color:var(--ink)}
+.q .qh .st{font-size:13px;color:var(--muted);font-weight:400}
+.opts{display:grid;gap:8px;margin:12px 0 0}
+.opts button{font:inherit;text-align:left;padding:10px 14px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--fg);cursor:pointer}
+.opts button:hover{border-color:var(--blue)}
+.opts button.right{border-color:var(--ok);background:var(--ok-soft)}
+.opts button.wrong{border-color:var(--ink);background:var(--ink-soft)}
+.fb{margin:12px 0 0;font-size:15px;min-height:1.5em}
+.fb.ok{color:var(--ok)}.fb.no{color:var(--ink)}
+.reveal{font:inherit;font-size:14px;margin:12px 0 0;padding:6px 14px;border:1px solid var(--blue);color:var(--blue);background:transparent;border-radius:6px;cursor:pointer}
+.ans{display:none;margin-top:10px;border-left:3px solid var(--ok);padding:2px 0 2px 12px}
+.ans.show{display:block}
+.ans .lab{font-size:12px;letter-spacing:.06em;color:var(--ok);font-weight:700;margin:0}
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);z-index:5}
+.nav .in{max-width:820px;margin:0 auto;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.nav button{font:inherit;font-size:15px;padding:8px 20px;border-radius:6px;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--fg)}
+.nav button.go{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+.nav button:disabled{opacity:.4;cursor:not-allowed}
+.nav .hint{font-size:13px;color:var(--muted);text-align:center;flex:1}
+.stepintro{font-size:17px}
+.big{font-size:40px;margin:0}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="in">
+  <div class="row"><span><b>第 8 课</b> · 完成「猜猜我是谁」</span><span>选择题一次答对：<b id="scoreOk">0</b> / <b id="scoreAll">0</b></span></div>
+  <div class="chips" id="chips"></div>
+  <div class="bar"><i id="bar"></i></div>
+</div></div>
+
+<div class="wrap" id="screens">
+
+<!-- ======================= 任务 ======================= -->
+<section class="screen" data-step="任务">
+  <p class="kicker">第 8 课任务</p>
+  <h2>完成「猜猜我是谁」</h2>
+  <p>AI 已经能守规矩地回答问题了。最后一课把游戏补完整：<b>提问也要用掉一次机会</b>；等 AI 回答时显示"AI 正在想…"，网页不再卡住；不能在 AI 还没回答时重复提问；猜对了按用掉的次数给一个称号。</p>
+  <img class="shot" src="第8课_图/game.png" alt="完成后的游戏">
+  <p class="cap">完成后的游戏：问了 3 个问题，第 4 次猜对，获得称号"小侦探"（真实运行截图）</p>
+  <div class="tbl"><table>
+    <tr><th>步骤</th><th>做什么</th><th>新学的代码</th></tr>
+    <tr><td>第 1 步</td><td>提问和猜错都扣机会</td><td>函数 <code>use_one</code></td></tr>
+    <tr><td>第 2 步</td><td>显示"AI 正在想…"，网页不卡</td><td><code>async</code> / <code>await</code></td></tr>
+    <tr><td>第 3 步</td><td>防止重复提问，按回车也能提问</td><td><code>game["busy"]</code>、<code>box.on</code></td></tr>
+    <tr><td>第 4 步</td><td>猜对后给称号</td><td>函数 <code>title_for</code></td></tr>
+    <tr><td>第 5 步</td><td>排错</td><td>常见错误</td></tr>
+  </table></div>
+</section>
+
+<!-- ======================= 第 1 步 ======================= -->
+<section class="screen" data-step="第1步">
+  <p class="kicker">第 1 步 · 扣机会</p>
+  <h2>把"用掉一次机会"写成函数</h2>
+  <p>按游戏规则，每问一个问题、每猜错一次，都要用掉一次机会。两个地方都要用，所以写成一个函数：</p>
+  <pre><code>def use_one():
+    game["left"] = game["left"] - 1
+    show_left()
+    if game["left"] == 0:
+        game["over"] = True
+        say(False, f"😅 机会用完了，答案是{game['secret']}。点「新游戏」再来一局！")</code></pre>
+  <p><code>ask</code> 里 AI 回答之后调用一次；<code>guess</code> 里猜错时调用一次（原来写在 <code>guess</code> 里的扣机会代码就可以删掉了）：</p>
+  <pre><code>            say(False, answer)
+            <b>use_one()</b></code></pre>
+  <pre><code>        else:
+            say(False, f"不对，不是{g}！")
+            <b>use_one()</b></code></pre>
+  <img class="shot" src="第8课_图/lose.png" alt="机会用完">
+  <p class="cap">把 MAX_TRIES 临时改成 2 测试：问一次、猜错一次，机会用完；再提问会弹出提示</p>
+  <div class="note">💡 连接 AI 出错时不调用 <code>use_one</code>：不是玩家的错，不扣机会。</div>
+</section>
+
+<section class="screen" data-step="第1步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q1</span>一共 10 次机会。玩家问了 3 个问题，猜错 1 次，又有一次提问时网络断了（出现了 ⚠️ 提示）。现在剩几次？</p>
+  <div class="opts">
+    <button>A. 5 次</button>
+    <button data-right>B. 6 次</button>
+    <button>C. 7 次</button>
+  </div>
+  <p class="fb" data-ok="对！3 个问题 + 1 次猜错，一共调用 4 次 use_one。网络出错走的是 except，没有调用 use_one，不扣机会。" data-no="出错时走的是 try 还是 except？那里调用 use_one 了吗？"></p>
+</div></section>
+
+<!-- ======================= 第 2 步 ======================= -->
+<section class="screen" data-step="第2步">
+  <p class="kicker">第 2 步 · 网页不卡</p>
+  <h2>为什么"AI 正在想…"不显示</h2>
+  <p>先加一个文本组件 <code>status</code>，调用 AI 前显示"AI 正在想…"，拿到回答后清空：</p>
+  <pre><code>        status.text = "AI 正在想…"
+        raw = ask_ai(game["history"])
+        ...
+        status.text = ""</code></pre>
+  <p>我用程序在点击后每隔一段时间检查一次网页：等 AI 的那一秒里，网页上<b>始终没有出现</b>"AI 正在想…"，连自己的问题气泡也是和 AI 的回答<b>同时</b>出现的。</p>
+  <div class="hard">
+    <p class="t">难点：普通函数在等 AI 时，网页没法更新</p>
+    <p style="margin:0">NiceGUI 同一时间只能做一件事。<code>ask_ai</code> 在等服务器回答时，NiceGUI 一直被占着，没空把新的文字发给浏览器。等它空下来，<code>status</code> 已经被清空了，所以玩家什么也看不到。这就是第 5 课提到的"网页停顿一两秒"。</p>
+  </div>
+</section>
+
+<section class="screen" data-step="第2步">
+  <p class="kicker">第 2 步 · 网页不卡</p>
+  <h2><code>async</code> / <code>await</code>：一边等，一边更新网页</h2>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th><th>英文意思</th></tr>
+    <tr><td><code>from nicegui import run, ui</code></td><td>多导入一个 <code>run</code></td><td></td></tr>
+    <tr><td><code>async def ask():</code></td><td>把 <code>ask</code> 变成<b>异步函数</b>，它可以在中途暂停等待</td><td>async = 异步</td></tr>
+    <tr><td><code>run.io_bound(ask_ai, game["history"])</code></td><td>把 <code>ask_ai</code> 交给后台去执行，参数写在后面</td><td>io bound = 等待输入输出</td></tr>
+    <tr><td><code>await ...</code></td><td>在这里等后台的结果；等待期间 NiceGUI 可以去更新网页</td><td>await = 等待</td></tr>
+  </table></div>
+  <pre><code><b>async</b> def ask():
+    ...
+        status.text = "AI 正在想…"
+        try:
+            raw = <b>await run.io_bound(ask_ai, game["history"])</b>
+            ...
+        status.text = ""</code></pre>
+  <p>改完再用同样的方法测试：点击后"AI 正在想…"马上出现，AI 回答到了就消失。</p>
+  <div class="note">💡 注意 <code>run.io_bound(ask_ai, game["history"])</code> 里的 <code>ask_ai</code> <b>后面没有括号</b>：和 <code>on_click=ask</code> 一样，是把函数交出去，让后台去调用。</div>
+</section>
+
+<section class="screen" data-step="第2步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q2</span>改成 <code>async</code> 之后，为什么"AI 正在想…"就能显示了？</p>
+  <div class="opts">
+    <button>A. AI 回答得更快了</button>
+    <button data-right>B. await 等待时会让出 NiceGUI，它就有空把新文字发给浏览器</button>
+    <button>C. async 让 status 组件变大了</button>
+  </div>
+  <p class="fb" data-ok="对！AI 的速度没变，变的是等待的方式：普通函数是「占着不放」地等，await 是「让出来」地等。" data-no="AI 回答的时间变了吗？变的是 NiceGUI 在等待时能不能做别的事。"></p>
+</div></section>
+
+<!-- ======================= 第 3 步 ======================= -->
+<section class="screen" data-step="第3步">
+  <p class="kicker">第 3 步 · 防止重复提问</p>
+  <h2><code>game["busy"]</code> 和回车提问</h2>
+  <p>网页不卡了，新问题也来了：AI 还没回答时，玩家可以再点一次"提问"，两个问题同时发出去，对话记录就乱了。用 <code>game["busy"]</code> 记录"AI 是不是正在回答"：</p>
+  <pre><code>game = {..., <b>"busy": False</b>, "history": []}
+
+async def ask():
+    q = box.value
+    if game["over"]:
+        ui.notify("这一局结束了，点「新游戏」再来一局")
+    <b>elif game["busy"]:
+        ui.notify("AI 还在想，请稍等")</b>
+    elif q == "":
+        ui.notify("请先输入问题")
+    else:
+        ...
+        <b>game["busy"] = True</b>
+        status.text = "AI 正在想…"
+        try:
+            ...
+        except Exception as e:
+            ...
+        <b>game["busy"] = False</b>
+        status.text = ""</code></pre>
+  <p>再让输入框按回车也能提问：</p>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th></tr>
+    <tr><td><code>box.on("keydown.enter", ask)</code></td><td>在输入框里按下回车键时，执行 <code>ask</code>（keydown = 按下键）</td></tr>
+  </table></div>
+  <p class="cap">测试：AI 回答前连点两次"提问"，只发出了一个问题；第二个问题用回车发送，也正常</p>
+</section>
+
+<section class="screen" data-step="第3步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q3</span>如果把 <code>game["busy"] = False</code> 写进了 <code>try</code> 里面（放在 <code>use_one()</code> 后面），而不是 try / except 的后面，会出什么问题？</p>
+  <div class="opts">
+    <button>A. 没有问题</button>
+    <button data-right>B. 一旦连接出错，busy 一直是 True，之后每次提问都提示"AI 还在想"</button>
+    <button>C. 每次都会报错</button>
+  </div>
+  <p class="fb" data-ok="对！出错时 try 里后面的代码不会执行，直接跳到 except，busy 就没被改回 False。写在 try / except 后面，不管成功还是出错都会执行。" data-no="出错时，try 里出错那一行后面的代码还会执行吗？"></p>
+</div></section>
+
+<!-- ======================= 第 4 步 ======================= -->
+<section class="screen" data-step="第4步">
+  <p class="kicker">第 4 步 · 称号</p>
+  <h2>猜对后按次数给称号</h2>
+  <pre><code>def title_for(used):
+    if used &lt;= 3:
+        return "🧠 读心大师"
+    elif used &lt;= 6:
+        return "🔍 小侦探"
+    else:
+        return "🐢 坚持到底"</code></pre>
+  <p>猜对时，用掉的次数 = 已经扣掉的次数 + 这次猜对的 1 次：</p>
+  <pre><code>        if g == game["secret"]:
+            game["over"] = True
+            <b>used = MAX_TRIES - game["left"] + 1</b>
+            say(False, f"🎉 猜对了！就是{game['secret']}！你用了 {used} 次机会，获得称号：{<b>title_for(used)</b>}")</code></pre>
+  <p>到这里，整个游戏就完成了：</p>
+  <button class="reveal">看完整代码</button>
+  <div class="ans"><pre><code>import random
+from nicegui import run, ui
+from openai import OpenAI
+
+API_KEY = "在这里粘贴你的 key"
+client = OpenAI(api_key=API_KEY, base_url="https://api.siliconflow.cn/v1")
+MODEL = "Qwen/Qwen2.5-7B-Instruct"
+
+MAX_TRIES = 10
+SECRETS = {
+    "动物": ["企鹅", "大象", "猫", "鲨鱼", "蜜蜂"],
+    "食物": ["披萨", "香蕉", "冰淇淋", "饺子", "鸡蛋"],
+    "物品": ["雨伞", "手机", "自行车", "吉他", "时钟"],
+}
+
+game = {"category": "动物", "secret": "", "left": MAX_TRIES, "over": False, "busy": False, "history": []}
+
+def make_rules(secret):
+    return (
+        f"我们在玩猜谜游戏。谜底是：{secret}。\n"
+        "玩家会问“是不是”的问题来猜谜底。请根据谜底的真实情况，如实回答。\n"
+        "规则：\n"
+        "1. 只能回答这三个词之一：是、不是、不确定。\n"
+        "2. 不许说出谜底，也不许给任何提示。\n"
+        "3. 如果玩家问的不是“是不是”的问题，回答：不确定。\n"
+        "例子（假设谜底是：狗）：\n"
+        "问：它有四条腿吗？ 答：是\n"
+        "问：它会飞吗？ 答：不是\n"
+        "问：它叫什么？ 答：不确定"
+    )
+
+def to_answer(text, secret):
+    text = text.strip()
+    if secret in text:
+        return "不确定"
+    if text.startswith("不确定"):
+        return "不确定"
+    if text.startswith("是"):
+        return "是"
+    if text.startswith("不"):
+        return "不是"
+    return "不确定"
+
+def ask_ai(history):
+    response = client.chat.completions.create(model=MODEL, messages=history, temperature=0)
+    return response.choices[0].message.content
+
+def say(mine, text):
+    with chat:
+        if mine:
+            ui.chat_message(text, name="我", sent=True)
+        else:
+            ui.chat_message(text, name="AI")
+
+def show_left():
+    left_label.text = f"剩余机会：{game['left']} / {MAX_TRIES}"
+
+def title_for(used):
+    if used &lt;= 3:
+        return "🧠 读心大师"
+    elif used &lt;= 6:
+        return "🔍 小侦探"
+    else:
+        return "🐢 坚持到底"
+
+def use_one():
+    game["left"] = game["left"] - 1
+    show_left()
+    if game["left"] == 0:
+        game["over"] = True
+        say(False, f"😅 机会用完了，答案是{game['secret']}。点「新游戏」再来一局！")
+
+def new_game():
+    game["secret"] = random.choice(SECRETS[game["category"]])
+    game["left"] = MAX_TRIES
+    game["over"] = False
+    game["history"] = [{"role": "system", "content": make_rules(game["secret"])}]
+    chat.clear()
+    show_left()
+    say(False, f"我想好了一个{game['category']}，问我吧！")
+
+def choose(e):
+    game["category"] = e.sender.text
+    category.text = f"当前类别：{game['category']}"
+    new_game()
+
+async def ask():
+    q = box.value
+    if game["over"]:
+        ui.notify("这一局结束了，点「新游戏」再来一局")
+    elif game["busy"]:
+        ui.notify("AI 还在想，请稍等")
+    elif q == "":
+        ui.notify("请先输入问题")
+    else:
+        say(True, q)
+        box.value = ""
+        game["history"].append({"role": "user", "content": q})
+        game["busy"] = True
+        status.text = "AI 正在想…"
+        try:
+            raw = await run.io_bound(ask_ai, game["history"])
+            answer = to_answer(raw, game["secret"])
+            game["history"].append({"role": "assistant", "content": answer})
+            say(False, answer)
+            use_one()
+        except Exception as e:
+            game["history"].pop()
+            say(False, f"⚠️ 连接 AI 出错了（{type(e).__name__}），这次不扣机会。检查一下 key 和网络再试。")
+        game["busy"] = False
+        status.text = ""
+
+def guess():
+    g = box.value
+    if game["over"]:
+        ui.notify("这一局结束了，点「新游戏」再来一局")
+    elif g == "":
+        ui.notify("请先输入你猜的东西")
+    else:
+        say(True, f"我猜：{g}")
+        box.value = ""
+        if g == game["secret"]:
+            game["over"] = True
+            used = MAX_TRIES - game["left"] + 1
+            say(False, f"🎉 猜对了！就是{game['secret']}！你用了 {used} 次机会，获得称号：{title_for(used)}")
+        else:
+            say(False, f"不对，不是{g}！")
+            use_one()
+
+with ui.column().classes("w-full max-w-xl mx-auto"):
+    ui.label("猜猜我是谁").classes("text-3xl font-bold")
+    ui.label("我心里想好了一个东西，你来猜！")
+    with ui.row():
+        for c in SECRETS:
+            ui.button(c, on_click=choose)
+    category = ui.label("当前类别：动物")
+    left_label = ui.label("").classes("text-lg font-bold text-orange-700")
+    with ui.card().classes("w-full"):
+        chat = ui.column().classes("w-full")
+        status = ui.label("").classes("text-sm text-gray-500")
+        box = ui.input(placeholder="输入问题，例如：它会飞吗？").classes("w-full").props("outlined")
+        box.on("keydown.enter", ask)
+        with ui.row():
+            ui.button("提问", on_click=ask)
+            ui.button("我猜是它", on_click=guess).props("color=orange")
+            ui.button("新游戏", on_click=new_game)
+
+new_game()
+
+ui.run()</code></pre></div>
+</section>
+
+<section class="screen" data-step="第4步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q4</span>玩家问了 6 个问题，第 7 次直接猜对了。他得到什么称号？</p>
+  <div class="opts">
+    <button>A. 🔍 小侦探</button>
+    <button data-right>B. 🐢 坚持到底</button>
+    <button>C. 🧠 读心大师</button>
+  </div>
+  <p class="fb" data-ok="对！6 个问题后剩 4 次，used = 10 - 4 + 1 = 7，大于 6，所以是「坚持到底」。" data-no="先算剩余机会，再代入 used = MAX_TRIES - game[&quot;left&quot;] + 1。"></p>
+</div></section>
+
+<!-- ======================= 第 5 步 ======================= -->
+<section class="screen" data-step="第5步"><div class="q" data-choice>
+  <p class="kicker">第 5 步 · 排错</p>
+  <p class="qh"><span class="n">Q5</span>运行时报错，问题出在哪里？</p>
+  <pre><code>    raw = await run.io_bound(ask_ai, game["history"])
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+SyntaxError: 'await' outside async function</code></pre>
+  <div class="opts">
+    <button>A. 没有导入 run</button>
+    <button data-right>B. ask 前面忘了写 async，普通函数里不能用 await</button>
+    <button>C. ask_ai 后面要加括号</button>
+  </div>
+  <p class="fb" data-ok="对！'await' outside async function 意思是「await 写在了异步函数外面」。改成 async def ask(): 就好了。" data-no="报错说 await 必须写在什么样的函数里？"></p>
+</div></section>
+
+<section class="screen" data-step="第5步"><div class="q" data-choice>
+  <p class="kicker">第 5 步 · 排错</p>
+  <p class="qh"><span class="n">Q6</span>游戏做好了，小明想发给同学玩。发之前最重要的一件事是什么？</p>
+  <div class="opts">
+    <button>A. 把 MAX_TRIES 改大一点</button>
+    <button data-right>B. 把 API_KEY 换回 "在这里粘贴你的 key"</button>
+    <button>C. 删掉 to_answer，让代码短一点</button>
+  </div>
+  <p class="fb" data-ok="对！第 5 课说过：key 是密码，发出去就收不回来。同学收到后填自己的 key 就能玩。" data-no="代码里有哪一样东西是不能给别人的？"></p>
+</div></section>
+
+<!-- ======================= 完成 ======================= -->
+<section class="screen" data-step="完成">
+  <p class="big">🏆</p>
+  <h2>「猜猜我是谁」完成！</h2>
+  <p>你从一个空白网页开始，亲手写出了一个接入 AI 的完整游戏。本课选择题一次答对 <b id="finalOk">0</b> / <b id="finalAll">0</b>。</p>
+  <div class="tbl"><table>
+    <tr><th>课</th><th>游戏多了什么</th><th>核心知识</th></tr>
+    <tr><td>1</td><td>标题、按钮、输入框</td><td>组件、<code>ui.run()</code></td></tr>
+    <tr><td>2</td><td>按钮能点了</td><td>事件、<code>.value</code>、<code>.text</code></td></tr>
+    <tr><td>3</td><td>布局和聊天气泡</td><td>容器、样式</td></tr>
+    <tr><td>4</td><td>谜底、机会、输赢</td><td>字典、<code>random</code></td></tr>
+    <tr><td>5</td><td>AI 能回答了</td><td>API、API Key</td></tr>
+    <tr><td>6</td><td>AI 记住对话、知道谜底</td><td>对话记录、system 消息</td></tr>
+    <tr><td>7</td><td>AI 守规矩</td><td>提示词、检查 AI 输出、<code>try</code></td></tr>
+    <tr><td>8</td><td>完整的游戏</td><td><code>async</code> / <code>await</code></td></tr>
+  </table></div>
+  <div class="mission">
+    <p class="kicker">接下来可以自己改</p>
+    <p style="margin:0">这是你的游戏了。可以试试：在 <code>SECRETS</code> 里加你喜欢的类别（游戏角色、城市、明星）；改称号和规则；加一个"提示"按钮，花 2 次机会让 AI 说出谜底的一个特点（想想要怎么改提示词）；把界面换成你喜欢的颜色。</p>
+  </div>
+</section>
+
+</div>
+
+<div class="nav"><div class="in">
+  <button id="prev">← 上一页</button>
+  <span class="hint" id="hint"></span>
+  <button id="next" class="go">下一页 →</button>
+</div></div>
+
+<script>
+const screens = [...document.querySelectorAll(".screen")];
+const steps = [...new Set(screens.map(s => s.dataset.step))];
+const chips = document.getElementById("chips");
+const prev = document.getElementById("prev"), next = document.getElementById("next"), hint = document.getElementById("hint");
+const choiceQs = document.querySelectorAll("[data-choice]");
+let ok = 0, cur = 0;
+document.getElementById("scoreAll").textContent = choiceQs.length;
+document.getElementById("finalAll").textContent = choiceQs.length;
+
+steps.forEach(name => {
+  const b = document.createElement("button");
+  b.textContent = name;
+  b.onclick = () => go(screens.findIndex(s => s.dataset.step === name));
+  chips.appendChild(b);
+});
+
+choiceQs.forEach(q => {
+  const fb = q.querySelector(".fb");
+  let first = true;
+  q.querySelectorAll(".opts button").forEach(b => {
+    b.onclick = () => {
+      const right = b.hasAttribute("data-right");
+      q.dataset.answered = "1";
+      if (right) {
+        b.classList.add("right");
+        fb.className = "fb ok"; fb.textContent = "✅ " + fb.dataset.ok;
+        if (first) { ok++; document.getElementById("scoreOk").textContent = ok; document.getElementById("finalOk").textContent = ok; }
+      } else {
+        b.classList.add("wrong");
+        fb.className = "fb no"; fb.textContent = "❌ " + fb.dataset.no;
+      }
+      first = false;
+      update();
+    };
+  });
+});
+
+document.querySelectorAll(".reveal").forEach(b => {
+  b.dataset.label = b.textContent;
+  b.onclick = () => {
+    const a = b.nextElementSibling;
+    a.classList.toggle("show");
+    b.textContent = a.classList.contains("show") ? "收起" : b.dataset.label;
+  };
+});
+
+function update() {
+  const s = screens[cur];
+  const q = s.querySelector("[data-choice]");
+  const locked = q && !q.dataset.answered;
+  prev.disabled = cur === 0;
+  next.disabled = locked || cur === screens.length - 1;
+  const isQ = s.querySelector(".q");
+  next.textContent = cur === 0 ? "开始 →" : isQ ? "下一题 →" : "下一页 →";
+  hint.textContent = locked ? "先选一个答案" : `${cur + 1} / ${screens.length}`;
+  const si = steps.indexOf(s.dataset.step);
+  [...chips.children].forEach((c, i) => { c.className = i === si ? "now" : i < si ? "past" : ""; });
+  document.getElementById("bar").style.width = (cur / (screens.length - 1) * 100) + "%";
+}
+
+function go(i) {
+  if (i < 0 || i >= screens.length) return;
+  screens[cur].classList.remove("show");
+  cur = i;
+  screens[cur].classList.add("show");
+  window.scrollTo(0, 0);
+  try { localStorage.setItem("lesson8-pos", cur); } catch (e) {}
+  update();
+}
+
+prev.onclick = () => go(cur - 1);
+next.onclick = () => go(cur + 1);
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" && !next.disabled) go(cur + 1);
+  if (e.key === "ArrowLeft" && !prev.disabled) go(cur - 1);
+});
+
+let start = 0;
+try { start = Math.min(parseInt(localStorage.getItem("lesson8-pos")) || 0, screens.length - 1); } catch (e) {}
+screens[start].classList.add("show"); cur = start; update();
+</script>
+</body>
+</html>

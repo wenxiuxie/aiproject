@@ -1,0 +1,558 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 7 课 · 给 AI 立规矩</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Noto+Serif+SC:wght@700&family=JetBrains+Mono&display=swap">
+<style>
+:root{--bg:#f6f7f5;--paper:#fff;--fg:#1d2520;--muted:#5d6a62;--line:#dde3de;--ink:#b4232f;--ink-soft:#fbe9ea;--code:#eef2ef;--ok:#1f7a4d;--ok-soft:#e3f4ea;--blue:#2f5f9e;--blue-soft:#e8eff8;--hard:#8a5a00;--hard-soft:#fdf3dc;
+--display:"Noto Serif SC","Songti SC",serif;--body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;--mono:"JetBrains Mono",Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#141a17;--paper:#1b231f;--fg:#e4ebe6;--muted:#9aa8a0;--line:#2c3832;--ink:#f0707a;--ink-soft:#3a1f22;--code:#111714;--ok:#5fd39a;--ok-soft:#173326;--blue:#8db4ea;--blue-soft:#1a2738;--hard:#f0c060;--hard-soft:#33290f;color-scheme:dark}}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.75;margin:0}
+.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .in{max-width:820px;margin:0 auto;padding:8px 16px}
+.top .row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.top .row b{color:var(--fg)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 4px}
+.chips button{font:inherit;font-size:12px;padding:1px 9px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--muted);cursor:pointer}
+.chips button.now{border-color:var(--ink);color:var(--ink);font-weight:700}
+.chips button.past{color:var(--ok);border-color:var(--ok)}
+.bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink);width:0;transition:width .25s}
+.wrap{max-width:820px;margin:0 auto;padding:22px 16px 120px}
+.screen{display:none}
+.screen.show{display:block}
+h1{font-family:var(--display);font-size:30px;line-height:1.3;margin:0 0 8px}
+h2{font-family:var(--display);font-size:24px;margin:0 0 10px}
+h3{font-size:17px;margin:22px 0 6px}
+.kicker{font-size:12px;letter-spacing:.08em;color:var(--ink);font-weight:700;margin:0 0 4px}
+.story p{font-size:17px}
+.mission{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--ink);border-radius:8px;padding:12px 16px;margin:18px 0}
+.route{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px;margin:10px 0}
+.route div{font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+.route div b{font-family:var(--mono);color:var(--ink);margin-right:4px}
+.route div.now{border-color:var(--ink)}
+pre{background:var(--code);font-family:var(--mono);font-size:14px;line-height:1.6;padding:12px 14px;border-radius:6px;overflow-x:auto;margin:10px 0}
+code{font-family:var(--mono);font-size:.92em;background:var(--code);padding:1px 5px;border-radius:4px}
+pre code{background:none;padding:0}
+pre b{color:var(--ink)}
+img.shot{display:block;max-width:100%;border:1px solid var(--line);border-radius:6px;margin:8px 0 4px;background:#fff}
+img.shot.narrow{max-width:420px}
+.cap{font-size:13px;color:var(--muted);margin:0 0 12px}
+.note{background:var(--blue-soft);border-radius:6px;padding:10px 14px;margin:12px 0;font-size:15px}
+.hard{background:var(--hard-soft);border-radius:6px;padding:10px 14px;margin:14px 0;font-size:15px}
+.hard .t{font-weight:700;color:var(--hard);margin:0 0 4px}
+.hard pre{background:var(--paper)}
+table{border-collapse:collapse;margin:10px 0;font-size:15px;width:100%}
+td,th{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--paper);white-space:nowrap}
+.tbl{overflow-x:auto}
+.q .qh{font-weight:700;font-size:18px;margin:0 0 8px;display:flex;gap:10px;flex-wrap:wrap;align-items:baseline}
+.q .qh .n{font-family:var(--mono);color:var(--ink)}
+.q .qh .st{font-size:13px;color:var(--muted);font-weight:400}
+.opts{display:grid;gap:8px;margin:12px 0 0}
+.opts button{font:inherit;text-align:left;padding:10px 14px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--fg);cursor:pointer}
+.opts button:hover{border-color:var(--blue)}
+.opts button.right{border-color:var(--ok);background:var(--ok-soft)}
+.opts button.wrong{border-color:var(--ink);background:var(--ink-soft)}
+.fb{margin:12px 0 0;font-size:15px;min-height:1.5em}
+.fb.ok{color:var(--ok)}.fb.no{color:var(--ink)}
+.reveal{font:inherit;font-size:14px;margin:12px 0 0;padding:6px 14px;border:1px solid var(--blue);color:var(--blue);background:transparent;border-radius:6px;cursor:pointer}
+.ans{display:none;margin-top:10px;border-left:3px solid var(--ok);padding:2px 0 2px 12px}
+.ans.show{display:block}
+.ans .lab{font-size:12px;letter-spacing:.06em;color:var(--ok);font-weight:700;margin:0}
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);z-index:5}
+.nav .in{max-width:820px;margin:0 auto;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.nav button{font:inherit;font-size:15px;padding:8px 20px;border-radius:6px;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--fg)}
+.nav button.go{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+.nav button:disabled{opacity:.4;cursor:not-allowed}
+.nav .hint{font-size:13px;color:var(--muted);text-align:center;flex:1}
+.stepintro{font-size:17px}
+.big{font-size:40px;margin:0}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="in">
+  <div class="row"><span><b>第 7 课</b> · 给 AI 立规矩</span><span>选择题一次答对：<b id="scoreOk">0</b> / <b id="scoreAll">0</b></span></div>
+  <div class="chips" id="chips"></div>
+  <div class="bar"><i id="bar"></i></div>
+</div></div>
+
+<div class="wrap" id="screens">
+
+<!-- ======================= 任务 ======================= -->
+<section class="screen" data-step="任务">
+  <p class="kicker">第 7 课任务</p>
+  <h2>给 AI 立规矩</h2>
+  <p>上一课的 AI 知道谜底，但每次都把"企鹅"说了出来。这一课用两道防线让它守规矩：第一道是<b>写清楚规则</b>，让 AI 只回答"是""不是""不确定"；第二道是<b>用 Python 检查</b>它的每一句回答，就算 AI 说漏嘴，玩家也看不到。最后再处理连接出错的情况。</p>
+  <img class="shot" src="第7课_图/game.png" alt="本课完成后，AI 只回答是或不是">
+  <p class="cap">本课完成后：同样的谜底和问题，AI 只回答"不是""是""不确定"（真实运行截图）</p>
+  <div class="tbl"><table>
+    <tr><th>步骤</th><th>做什么</th><th>新学的代码</th></tr>
+    <tr><td>第 1 步</td><td>在 system 消息里写规则</td><td>提示词、<code>temperature=0</code></td></tr>
+    <tr><td>第 2 步</td><td>改进规则：加例子</td><td>提示词里放例子</td></tr>
+    <tr><td>第 3 步</td><td>用 Python 检查回答</td><td><code>startswith</code>、<code>in</code>、<code>strip</code></td></tr>
+    <tr><td>第 4 步</td><td>连接出错时不卡住</td><td><code>try</code> / <code>except</code></td></tr>
+    <tr><td>第 5 步</td><td>排错</td><td>常见错误</td></tr>
+  </table></div>
+</section>
+
+<!-- ======================= 第 1 步 ======================= -->
+<section class="screen" data-step="第1步">
+  <p class="kicker">第 1 步 · 写规则</p>
+  <h2>提示词：把规则写进 system 消息</h2>
+  <p>发给 AI 的说明文字叫<b>提示词</b>（prompt）。上一课的提示词只说了"请回答玩家的问题"，AI 就自由发挥了。这次把规则一条一条写清楚：</p>
+  <pre><code>def make_rules(secret):
+    return (
+        f"我们在玩猜谜游戏。谜底是：{secret}。\n"
+        "玩家会问“是不是”的问题来猜谜底。\n"
+        "规则：\n"
+        "1. 只能回答这三个词之一：是、不是、不确定。\n"
+        "2. 不许说出谜底，也不许给任何提示。\n"
+        "3. 如果玩家问的不是“是不是”的问题，回答：不确定。"
+    )</code></pre>
+  <div class="tbl"><table>
+    <tr><th>写法</th><th>作用</th></tr>
+    <tr><td><code>"\n"</code></td><td>换行符，让每条规则单独一行</td></tr>
+    <tr><td>括号里连着写几个字符串</td><td>Python 会自动把它们连成一个长字符串，方便分行书写</td></tr>
+    <tr><td><code>temperature=0</code></td><td>调用 <code>create</code> 时加上，降低随机性，让回答更稳定（temperature = 温度）</td></tr>
+  </table></div>
+  <p>谜底是企鹅，同样 6 个问题，我分别用上一课的提示词和新规则测了一次：</p>
+  <div class="tbl"><table>
+    <tr><th>问题</th><th>上一课的提示词</th><th>新规则</th></tr>
+    <tr><td>它会飞吗？</td><td>不会，企鹅不会飞。</td><td>不确定。</td></tr>
+    <tr><td>它是黑白色的吗？</td><td>是的，企鹅的身体通常是黑色和白色的。</td><td>是</td></tr>
+    <tr><td>它生活在水里吗？</td><td>不确定</td><td>不确定</td></tr>
+    <tr><td>给我一点提示吧</td><td>好的，企鹅是一种鸟类，但它们不会飞……</td><td>不确定</td></tr>
+    <tr><td>它叫什么名字？</td><td>谜底是企鹅……</td><td>不确定</td></tr>
+    <tr><td>它是猫吗？</td><td>不是，企鹅不是猫。</td><td>不是</td></tr>
+  </table></div>
+  <p class="cap">真实运行结果。新规则不再泄露谜底，但"它会飞吗？"答成了"不确定"，太保守了</p>
+</section>
+
+<section class="screen" data-step="第1步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q1</span>第 5 课发现，同一个问题 AI 每次回答都不一样。为什么在游戏里要加 <code>temperature=0</code>？</p>
+  <div class="opts">
+    <button>A. 让 AI 回答得更快</button>
+    <button data-right>B. 降低随机性，同一个问题尽量得到同样的回答，游戏才公平</button>
+    <button>C. 让 AI 更聪明</button>
+  </div>
+  <p class="fb" data-ok="对！猜谜游戏里，同一个问题这次答「是」、下次答「不是」，玩家就没法推理了。" data-no="回想第 5 课 Q3：AI 的回答为什么每次不一样？"></p>
+</div></section>
+
+<!-- ======================= 第 2 步 ======================= -->
+<section class="screen" data-step="第2步">
+  <p class="kicker">第 2 步 · 改进规则</p>
+  <h2>告诉 AI"如实回答"，再给它几个例子</h2>
+  <p>AI 太保守，是因为规则只说了"不许做什么"，没说"应该怎么答"。加两处：要求<b>如实回答</b>；再给几个<b>问答例子</b>。</p>
+  <pre><code>        "玩家会问“是不是”的问题来猜谜底。<b>请根据谜底的真实情况，如实回答。</b>\n"
+        ...
+        <b>"例子（假设谜底是：狗）：\n"
+        "问：它有四条腿吗？ 答：是\n"
+        "问：它会飞吗？ 答：不是\n"
+        "问：它叫什么？ 答：不确定"</b></code></pre>
+  <p>换了三个谜底再测：</p>
+  <div class="tbl"><table>
+    <tr><th>谜底</th><th>问题 → AI 的回答</th></tr>
+    <tr><td>企鹅</td><td>它会飞吗？→ 不是 ｜ 它是黑白色的吗？→ 是 ｜ 给我一点提示吧 → 不确定 ｜ 它叫什么名字？→ 不确定 ｜ 它是猫吗？→ 不是</td></tr>
+    <tr><td>香蕉</td><td>它是水果吗？→ 是 ｜ 它是红色的吗？→ 不是 ｜ 它是甜的吗？→ 是 ｜ 它要剥皮吗？→ 是 ｜ 直接告诉我答案 → 不确定</td></tr>
+    <tr><td>雨伞</td><td>它能吃吗？→ 不确定 ｜ 下雨时用吗？→ 是 ｜ 它比冰箱大吗？→ 不确定 ｜ 它是电器吗？→ 不是</td></tr>
+  </table></div>
+  <p class="cap">真实运行结果。大部分答对了，也没有泄露。"雨伞能吃吗"答成"不确定"，说明免费的小模型并不完美</p>
+  <div class="hard">
+    <p class="t">难点：提示词里的例子为什么用"狗"？</p>
+    <p style="margin:0">给 AI 看几个例子，它就更清楚该用什么格式回答，这种写法叫<b>少样本提示</b>（few-shot）。例子要用一个<b>和谜底无关</b>的东西：如果例子里写的是真实谜底，比如"问：它会游泳吗？答：是"，就等于给了提示，而且例子可能和真实答案冲突。</p>
+  </div>
+</section>
+
+<section class="screen" data-step="第2步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q2</span>新规则只改了提示词文字，Python 代码几乎没变，AI 的回答却好了很多。这说明什么？</p>
+  <div class="opts">
+    <button data-right>A. 提示词写得清不清楚，直接影响 AI 的表现</button>
+    <button>B. 第一次测试时网络不好</button>
+    <button>C. 规则越长越好</button>
+  </div>
+  <p class="fb" data-ok="对！对 AI 来说，提示词就是它要遵守的说明书。改进提示词、测试、再改进，是做 AI 程序最常做的工作。规则不是越长越好，而是越清楚越好。" data-no="两次测试只改了什么？"></p>
+</div></section>
+
+<!-- ======================= 第 3 步 ======================= -->
+<section class="screen" data-step="第3步">
+  <p class="kicker">第 3 步 · 第二道防线</p>
+  <h2>用 Python 检查 AI 的回答</h2>
+  <p>规则写得再好，AI 也可能偶尔不听话。所以 AI 的回答不直接显示，先交给 <code>to_answer</code> 整理，<b>最后只可能是"是""不是""不确定"三者之一</b>。</p>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th><th>英文意思</th></tr>
+    <tr><td><code>text.strip()</code></td><td>去掉开头和结尾的空格、换行</td><td>strip = 剥掉</td></tr>
+    <tr><td><code>text.startswith("是")</code></td><td>是否以"是"开头，结果是 True / False</td><td>starts with = 以……开头</td></tr>
+    <tr><td><code>secret in text</code></td><td>谜底是否出现在回答里</td><td></td></tr>
+  </table></div>
+  <pre><code>def to_answer(text, secret):
+    text = text.strip()
+    if secret in text:
+        return "不确定"
+    if text.startswith("不确定"):
+        return "不确定"
+    if text.startswith("是"):
+        return "是"
+    if text.startswith("不"):
+        return "不是"
+    return "不确定"</code></pre>
+  <p>谜底是企鹅，我测试了几种回答：</p>
+  <div class="tbl"><table>
+    <tr><th>AI 的原话</th><th>整理后</th></tr>
+    <tr><td><code>'是的。'</code></td><td>是</td></tr>
+    <tr><td><code>'  不是'</code>（前面有空格）</td><td>不是</td></tr>
+    <tr><td><code>'不会，它不会飞。'</code></td><td>不是</td></tr>
+    <tr><td><code>'不确定。'</code></td><td>不确定</td></tr>
+    <tr><td><code>'企鹅不会飞'</code></td><td>不确定（说出了谜底）</td></tr>
+    <tr><td><code>'我不能说'</code></td><td>不确定</td></tr>
+  </table></div>
+  <p class="cap">真实运行结果</p>
+  <div class="hard">
+    <p class="t">难点：判断的顺序不能乱</p>
+    <p style="margin:0">"不确定"也是以"不"开头的。如果先判断 <code>startswith("不")</code>，"不确定"就会被错当成"不是"。我把顺序调换后实际测了一下，"不确定 → 不是"。所以<b>更具体的条件要放在前面</b>。</p>
+  </div>
+  <p>在 <code>ask</code> 里，用整理后的结果代替原话：</p>
+  <pre><code>        raw = ask_ai(game["history"])
+        <b>answer = to_answer(raw, game["secret"])</b>
+        game["history"].append({"role": "assistant", "content": <b>answer</b>})
+        say(False, <b>answer</b>)</code></pre>
+</section>
+
+<section class="screen" data-step="第3步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q3</span>谜底是"香蕉"。AI 的原话是 <code>"是的，香蕉是黄色的。"</code>，<code>to_answer</code> 返回什么？</p>
+  <div class="opts">
+    <button>A. 是</button>
+    <button data-right>B. 不确定</button>
+    <button>C. 不是</button>
+  </div>
+  <p class="fb" data-ok="对！第一个判断就是「谜底在不在回答里」。原话里有「香蕉」，直接返回「不确定」，后面的判断都不执行。宁可这次不回答，也不能把谜底显示给玩家。" data-no="to_answer 第一个 if 检查的是什么？"></p>
+</div></section>
+
+<section class="screen" data-step="第3步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q4</span>为什么存进 <code>history</code> 的是整理后的 <code>answer</code>，而不是 AI 的原话 <code>raw</code>？</p>
+  <div class="opts">
+    <button>A. 原话太长，存不下</button>
+    <button data-right>B. AI 下次会参考 history。存进去的都是规范的回答，AI 也会跟着这样回答</button>
+    <button>C. 没有区别</button>
+  </div>
+  <p class="fb" data-ok="对！history 就是 AI 的「记忆」。如果存了说漏嘴的原话，AI 看到自己以前说过谜底，后面就可能继续说。" data-no="回想第 6 课：AI 每次回答都会看什么？"></p>
+</div></section>
+
+<!-- ======================= 第 4 步 ======================= -->
+<section class="screen" data-step="第4步">
+  <p class="kicker">第 4 步 · 连接出错</p>
+  <h2><code>try</code> / <code>except</code>：出错了也不卡住</h2>
+  <p>key 填错、网络断了，<code>ask_ai</code> 都会报错。在网页里，这个报错只出现在终端，玩家只看到点了没反应。用 <code>try</code> / <code>except</code> 接住错误，告诉玩家发生了什么：</p>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th><th>英文意思</th></tr>
+    <tr><td><code>try:</code></td><td>尝试执行下面缩进的代码</td><td>try = 尝试</td></tr>
+    <tr><td><code>except Exception as e:</code></td><td>如果 try 里出错，就执行这里；<code>e</code> 是错误本身</td><td>except = 除了 / 例外</td></tr>
+    <tr><td><code>type(e).__name__</code></td><td>错误的名字，例如 <code>AuthenticationError</code></td><td></td></tr>
+  </table></div>
+  <pre><code>        game["history"].append({"role": "user", "content": q})
+        <b>try:</b>
+            raw = ask_ai(game["history"])
+            answer = to_answer(raw, game["secret"])
+            game["history"].append({"role": "assistant", "content": answer})
+            say(False, answer)
+        <b>except Exception as e:
+            game["history"].pop()
+            say(False, f"⚠️ 连接 AI 出错了（{type(e).__name__}），检查一下 key 和网络再试。")</b></code></pre>
+  <img class="shot" src="第7课_图/badkey.png" alt="key 填错时的提示">
+  <p class="cap">故意填一个错误的 key：玩家看到了提示，而不是点了没反应</p>
+  <button class="reveal">看本课完整代码</button>
+  <div class="ans"><pre><code>import random
+from nicegui import ui
+from openai import OpenAI
+
+API_KEY = "在这里粘贴你的 key"
+client = OpenAI(api_key=API_KEY, base_url="https://api.siliconflow.cn/v1")
+MODEL = "Qwen/Qwen2.5-7B-Instruct"
+
+MAX_TRIES = 10
+SECRETS = {
+    "动物": ["企鹅", "大象", "猫", "鲨鱼", "蜜蜂"],
+    "食物": ["披萨", "香蕉", "冰淇淋", "饺子", "鸡蛋"],
+    "物品": ["雨伞", "手机", "自行车", "吉他", "时钟"],
+}
+
+game = {"category": "动物", "secret": "", "left": MAX_TRIES, "over": False, "history": []}
+questions = []
+
+def make_rules(secret):
+    return (
+        f"我们在玩猜谜游戏。谜底是：{secret}。\n"
+        "玩家会问“是不是”的问题来猜谜底。请根据谜底的真实情况，如实回答。\n"
+        "规则：\n"
+        "1. 只能回答这三个词之一：是、不是、不确定。\n"
+        "2. 不许说出谜底，也不许给任何提示。\n"
+        "3. 如果玩家问的不是“是不是”的问题，回答：不确定。\n"
+        "例子（假设谜底是：狗）：\n"
+        "问：它有四条腿吗？ 答：是\n"
+        "问：它会飞吗？ 答：不是\n"
+        "问：它叫什么？ 答：不确定"
+    )
+
+def to_answer(text, secret):
+    text = text.strip()
+    if secret in text:
+        return "不确定"
+    if text.startswith("不确定"):
+        return "不确定"
+    if text.startswith("是"):
+        return "是"
+    if text.startswith("不"):
+        return "不是"
+    return "不确定"
+
+def ask_ai(history):
+    response = client.chat.completions.create(model=MODEL, messages=history, temperature=0)
+    return response.choices[0].message.content
+
+def say(mine, text):
+    with chat:
+        if mine:
+            ui.chat_message(text, name="我", sent=True)
+        else:
+            ui.chat_message(text, name="AI")
+
+def show_left():
+    left_label.text = f"剩余机会：{game['left']} / {MAX_TRIES}"
+
+def new_game():
+    game["secret"] = random.choice(SECRETS[game["category"]])
+    game["left"] = MAX_TRIES
+    game["over"] = False
+    game["history"] = [{"role": "system", "content": make_rules(game["secret"])}]
+    questions.clear()
+    chat.clear()
+    show_left()
+    say(False, f"我想好了一个{game['category']}，问我吧！")
+
+def choose(e):
+    game["category"] = e.sender.text
+    category.text = f"当前类别：{game['category']}"
+    new_game()
+
+def ask():
+    q = box.value
+    if game["over"]:
+        ui.notify("这一局结束了，点「新游戏」再来一局")
+    elif q == "":
+        ui.notify("请先输入问题")
+    else:
+        questions.append(q)
+        say(True, q)
+        box.value = ""
+        game["history"].append({"role": "user", "content": q})
+        try:
+            raw = ask_ai(game["history"])
+            answer = to_answer(raw, game["secret"])
+            game["history"].append({"role": "assistant", "content": answer})
+            say(False, answer)
+        except Exception as e:
+            game["history"].pop()
+            say(False, f"⚠️ 连接 AI 出错了（{type(e).__name__}），检查一下 key 和网络再试。")
+
+def guess():
+    g = box.value
+    if game["over"]:
+        ui.notify("这一局结束了，点「新游戏」再来一局")
+    elif g == "":
+        ui.notify("请先输入你猜的东西")
+    else:
+        say(True, f"我猜：{g}")
+        box.value = ""
+        if g == game["secret"]:
+            game["over"] = True
+            say(False, f"🎉 猜对了！就是{game['secret']}！")
+        else:
+            game["left"] = game["left"] - 1
+            if game["left"] == 0:
+                game["over"] = True
+                say(False, f"😅 机会用完了，答案是{game['secret']}。")
+            else:
+                say(False, f"不对，不是{g}！")
+        show_left()
+
+with ui.column().classes("w-full max-w-xl mx-auto"):
+    ui.label("猜猜我是谁").classes("text-3xl font-bold")
+    ui.label("我心里想好了一个东西，你来猜！")
+    with ui.row():
+        for c in SECRETS:
+            ui.button(c, on_click=choose)
+    category = ui.label("当前类别：动物")
+    left_label = ui.label("").classes("text-lg font-bold text-orange-700")
+    with ui.card().classes("w-full"):
+        chat = ui.column().classes("w-full")
+        box = ui.input(placeholder="输入问题，例如：它会飞吗？").classes("w-full").props("outlined")
+        with ui.row():
+            ui.button("提问", on_click=ask)
+            ui.button("我猜是它", on_click=guess).props("color=orange")
+            ui.button("新游戏", on_click=new_game)
+
+new_game()
+
+ui.run()</code></pre></div>
+</section>
+
+<section class="screen" data-step="第4步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q5</span><code>except</code> 里为什么要先 <code>game["history"].pop()</code>？</p>
+  <div class="opts">
+    <button data-right>A. 删掉刚加进去、但没得到回答的那个问题，让对话记录保持一问一答</button>
+    <button>B. 删掉 system 消息</button>
+    <button>C. 清空整个对话记录</button>
+  </div>
+  <p class="fb" data-ok="对！pop() 删除列表的最后一个元素，也就是刚 append 的问题。不删的话，history 里会出现两个连续的 user 消息，下一次 AI 可能把两个问题混在一起回答。" data-no="pop() 删除列表里的哪一个元素？最后加进去的是什么？"></p>
+</div></section>
+
+<!-- ======================= 第 5 步 ======================= -->
+<section class="screen" data-step="第5步"><div class="q" data-choice>
+  <p class="kicker">第 5 步 · 排错</p>
+  <p class="qh"><span class="n">Q6</span>小明的游戏里，AI 从来不回答"不确定"，本该"不确定"的都变成了"不是"。他的 <code>to_answer</code> 哪里错了？</p>
+  <pre><code>def to_answer(text, secret):
+    text = text.strip()
+    if secret in text:
+        return "不确定"
+    if text.startswith("是"):
+        return "是"
+    if text.startswith("不"):
+        return "不是"
+    if text.startswith("不确定"):
+        return "不确定"
+    return "不确定"</code></pre>
+  <div class="opts">
+    <button>A. 应该用 == 而不是 startswith</button>
+    <button data-right>B. "不确定"的判断放在了"不"的后面，永远执行不到</button>
+    <button>C. 最后一行应该 return "不是"</button>
+  </div>
+  <p class="fb" data-ok="对！「不确定」以「不」开头，先被 startswith(&quot;不&quot;) 接住，返回了「不是」。把「不确定」的判断移到「不」的前面就好了。" data-no="AI 回答「不确定」时，哪一个 if 最先成立？"></p>
+</div></section>
+
+<section class="screen" data-step="第5步"><div class="q" data-choice>
+  <p class="kicker">第 5 步 · 排错</p>
+  <p class="qh"><span class="n">Q7</span>如果删掉 <code>text = text.strip()</code> 这一行，AI 回答 <code>"\n是"</code>（前面带一个换行）时，<code>to_answer</code> 返回什么？</p>
+  <div class="opts">
+    <button>A. 是</button>
+    <button data-right>B. 不确定</button>
+    <button>C. 报错</button>
+  </div>
+  <p class="fb" data-ok="对！&quot;\n是&quot; 以换行符开头，不以「是」开头，三个 startswith 都不成立，最后返回「不确定」。玩家明明问对了却得不到答案。strip() 先去掉首尾的空白，就没这个问题了。" data-no="&quot;\n是&quot; 的第一个字符是什么？是「是」吗？"></p>
+</div></section>
+
+<!-- ======================= 完成 ======================= -->
+<section class="screen" data-step="完成">
+  <p class="big">🎉</p>
+  <h2>第 7 课完成</h2>
+  <p>AI 守规矩了，出错时也有提示。选择题一次答对 <b id="finalOk">0</b> / <b id="finalAll">0</b>。</p>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th></tr>
+    <tr><td>system 消息里的规则 + 例子</td><td>第一道防线：告诉 AI 怎么回答</td></tr>
+    <tr><td><code>temperature=0</code></td><td>回答更稳定</td></tr>
+    <tr><td><code>to_answer</code></td><td>第二道防线：只留下"是""不是""不确定"</td></tr>
+    <tr><td><code>strip</code> / <code>startswith</code> / <code>in</code></td><td>去空白 / 判断开头 / 判断包含</td></tr>
+    <tr><td><code>try</code> / <code>except</code></td><td>接住错误，告诉玩家</td></tr>
+  </table></div>
+  <p>规律：<b>AI 的输出不能直接相信，要用程序检查</b>。</p>
+  <div class="mission">
+    <p class="kicker">下一课预告</p>
+    <p style="margin:0">最后一课：提问也要扣机会，等 AI 时显示"AI 正在想…"，猜对了按用的次数给称号。完成整个「猜猜我是谁」！</p>
+  </div>
+</section>
+
+</div>
+
+<div class="nav"><div class="in">
+  <button id="prev">← 上一页</button>
+  <span class="hint" id="hint"></span>
+  <button id="next" class="go">下一页 →</button>
+</div></div>
+
+<script>
+const screens = [...document.querySelectorAll(".screen")];
+const steps = [...new Set(screens.map(s => s.dataset.step))];
+const chips = document.getElementById("chips");
+const prev = document.getElementById("prev"), next = document.getElementById("next"), hint = document.getElementById("hint");
+const choiceQs = document.querySelectorAll("[data-choice]");
+let ok = 0, cur = 0;
+document.getElementById("scoreAll").textContent = choiceQs.length;
+document.getElementById("finalAll").textContent = choiceQs.length;
+
+steps.forEach(name => {
+  const b = document.createElement("button");
+  b.textContent = name;
+  b.onclick = () => go(screens.findIndex(s => s.dataset.step === name));
+  chips.appendChild(b);
+});
+
+choiceQs.forEach(q => {
+  const fb = q.querySelector(".fb");
+  let first = true;
+  q.querySelectorAll(".opts button").forEach(b => {
+    b.onclick = () => {
+      const right = b.hasAttribute("data-right");
+      q.dataset.answered = "1";
+      if (right) {
+        b.classList.add("right");
+        fb.className = "fb ok"; fb.textContent = "✅ " + fb.dataset.ok;
+        if (first) { ok++; document.getElementById("scoreOk").textContent = ok; document.getElementById("finalOk").textContent = ok; }
+      } else {
+        b.classList.add("wrong");
+        fb.className = "fb no"; fb.textContent = "❌ " + fb.dataset.no;
+      }
+      first = false;
+      update();
+    };
+  });
+});
+
+document.querySelectorAll(".reveal").forEach(b => {
+  b.dataset.label = b.textContent;
+  b.onclick = () => {
+    const a = b.nextElementSibling;
+    a.classList.toggle("show");
+    b.textContent = a.classList.contains("show") ? "收起" : b.dataset.label;
+  };
+});
+
+function update() {
+  const s = screens[cur];
+  const q = s.querySelector("[data-choice]");
+  const locked = q && !q.dataset.answered;
+  prev.disabled = cur === 0;
+  next.disabled = locked || cur === screens.length - 1;
+  const isQ = s.querySelector(".q");
+  next.textContent = cur === 0 ? "开始 →" : isQ ? "下一题 →" : "下一页 →";
+  hint.textContent = locked ? "先选一个答案" : `${cur + 1} / ${screens.length}`;
+  const si = steps.indexOf(s.dataset.step);
+  [...chips.children].forEach((c, i) => { c.className = i === si ? "now" : i < si ? "past" : ""; });
+  document.getElementById("bar").style.width = (cur / (screens.length - 1) * 100) + "%";
+}
+
+function go(i) {
+  if (i < 0 || i >= screens.length) return;
+  screens[cur].classList.remove("show");
+  cur = i;
+  screens[cur].classList.add("show");
+  window.scrollTo(0, 0);
+  try { localStorage.setItem("lesson7-pos", cur); } catch (e) {}
+  update();
+}
+
+prev.onclick = () => go(cur - 1);
+next.onclick = () => go(cur + 1);
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" && !next.disabled) go(cur + 1);
+  if (e.key === "ArrowLeft" && !prev.disabled) go(cur - 1);
+});
+
+let start = 0;
+try { start = Math.min(parseInt(localStorage.getItem("lesson7-pos")) || 0, screens.length - 1); } catch (e) {}
+screens[start].classList.add("show"); cur = start; update();
+</script>
+</body>
+</html>

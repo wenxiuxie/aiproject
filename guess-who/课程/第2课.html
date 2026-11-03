@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 2 课 · 让按钮响应点击</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Noto+Serif+SC:wght@700&family=JetBrains+Mono&display=swap">
+<style>
+:root{--bg:#f6f7f5;--paper:#fff;--fg:#1d2520;--muted:#5d6a62;--line:#dde3de;--ink:#b4232f;--ink-soft:#fbe9ea;--code:#eef2ef;--ok:#1f7a4d;--ok-soft:#e3f4ea;--blue:#2f5f9e;--blue-soft:#e8eff8;--hard:#8a5a00;--hard-soft:#fdf3dc;
+--display:"Noto Serif SC","Songti SC",serif;--body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;--mono:"JetBrains Mono",Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#141a17;--paper:#1b231f;--fg:#e4ebe6;--muted:#9aa8a0;--line:#2c3832;--ink:#f0707a;--ink-soft:#3a1f22;--code:#111714;--ok:#5fd39a;--ok-soft:#173326;--blue:#8db4ea;--blue-soft:#1a2738;--hard:#f0c060;--hard-soft:#33290f;color-scheme:dark}}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.75;margin:0}
+.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .in{max-width:820px;margin:0 auto;padding:8px 16px}
+.top .row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.top .row b{color:var(--fg)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 4px}
+.chips button{font:inherit;font-size:12px;padding:1px 9px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--muted);cursor:pointer}
+.chips button.now{border-color:var(--ink);color:var(--ink);font-weight:700}
+.chips button.past{color:var(--ok);border-color:var(--ok)}
+.bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink);width:0;transition:width .25s}
+.wrap{max-width:820px;margin:0 auto;padding:22px 16px 120px}
+.screen{display:none}
+.screen.show{display:block}
+h1{font-family:var(--display);font-size:30px;line-height:1.3;margin:0 0 8px}
+h2{font-family:var(--display);font-size:24px;margin:0 0 10px}
+h3{font-size:17px;margin:22px 0 6px}
+.kicker{font-size:12px;letter-spacing:.08em;color:var(--ink);font-weight:700;margin:0 0 4px}
+.story p{font-size:17px}
+.mission{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--ink);border-radius:8px;padding:12px 16px;margin:18px 0}
+.route{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px;margin:10px 0}
+.route div{font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+.route div b{font-family:var(--mono);color:var(--ink);margin-right:4px}
+.route div.now{border-color:var(--ink)}
+pre{background:var(--code);font-family:var(--mono);font-size:14px;line-height:1.6;padding:12px 14px;border-radius:6px;overflow-x:auto;margin:10px 0}
+code{font-family:var(--mono);font-size:.92em;background:var(--code);padding:1px 5px;border-radius:4px}
+pre code{background:none;padding:0}
+pre b{color:var(--ink)}
+img.shot{display:block;max-width:100%;border:1px solid var(--line);border-radius:6px;margin:8px 0 4px;background:#fff}
+img.shot.narrow{max-width:420px}
+.cap{font-size:13px;color:var(--muted);margin:0 0 12px}
+.note{background:var(--blue-soft);border-radius:6px;padding:10px 14px;margin:12px 0;font-size:15px}
+.hard{background:var(--hard-soft);border-radius:6px;padding:10px 14px;margin:14px 0;font-size:15px}
+.hard .t{font-weight:700;color:var(--hard);margin:0 0 4px}
+.hard pre{background:var(--paper)}
+table{border-collapse:collapse;margin:10px 0;font-size:15px;width:100%}
+td,th{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--paper);white-space:nowrap}
+.tbl{overflow-x:auto}
+.q .qh{font-weight:700;font-size:18px;margin:0 0 8px;display:flex;gap:10px;flex-wrap:wrap;align-items:baseline}
+.q .qh .n{font-family:var(--mono);color:var(--ink)}
+.q .qh .st{font-size:13px;color:var(--muted);font-weight:400}
+.opts{display:grid;gap:8px;margin:12px 0 0}
+.opts button{font:inherit;text-align:left;padding:10px 14px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--fg);cursor:pointer}
+.opts button:hover{border-color:var(--blue)}
+.opts button.right{border-color:var(--ok);background:var(--ok-soft)}
+.opts button.wrong{border-color:var(--ink);background:var(--ink-soft)}
+.fb{margin:12px 0 0;font-size:15px;min-height:1.5em}
+.fb.ok{color:var(--ok)}.fb.no{color:var(--ink)}
+.reveal{font:inherit;font-size:14px;margin:12px 0 0;padding:6px 14px;border:1px solid var(--blue);color:var(--blue);background:transparent;border-radius:6px;cursor:pointer}
+.ans{display:none;margin-top:10px;border-left:3px solid var(--ok);padding:2px 0 2px 12px}
+.ans.show{display:block}
+.ans .lab{font-size:12px;letter-spacing:.06em;color:var(--ok);font-weight:700;margin:0}
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);z-index:5}
+.nav .in{max-width:820px;margin:0 auto;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.nav button{font:inherit;font-size:15px;padding:8px 20px;border-radius:6px;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--fg)}
+.nav button.go{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+.nav button:disabled{opacity:.4;cursor:not-allowed}
+.nav .hint{font-size:13px;color:var(--muted);text-align:center;flex:1}
+.stepintro{font-size:17px}
+.big{font-size:40px;margin:0}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="in">
+  <div class="row"><span><b>第 2 课</b> · 让按钮响应点击</span><span>选择题一次答对：<b id="scoreOk">0</b> / <b id="scoreAll">0</b></span></div>
+  <div class="chips" id="chips"></div>
+  <div class="bar"><i id="bar"></i></div>
+</div></div>
+
+<div class="wrap" id="screens">
+
+<!-- ======================= 任务 ======================= -->
+<section class="screen" data-step="任务">
+  <p class="kicker">第 2 课任务</p>
+  <h2>让按钮响应点击</h2>
+  <p>上一课，<code>guess_who.py</code> 已经有了标题、类别按钮和输入框，但点击按钮没有任何反应。这一课让它们工作起来：点类别按钮，显示当前类别；输入问题后点"提问"，程序读出问题并显示出来，同时统计已经问了几个问题。</p>
+  <img class="shot" src="第2课_图/final.png" alt="本课完成后的界面">
+  <p class="cap">本课完成后：点了"食物"，又问了两个问题（真实运行截图）</p>
+  <div class="tbl"><table>
+    <tr><th>步骤</th><th>做什么</th><th>新学的代码</th></tr>
+    <tr><td>第 1 步</td><td>点"提问"弹出提示</td><td><code>on_click=</code>、<code>ui.notify</code></td></tr>
+    <tr><td>第 2 步</td><td>读出输入框里的问题</td><td><code>box.value</code></td></tr>
+    <tr><td>第 3 步</td><td>把问题显示在网页上</td><td><code>result.text</code></td></tr>
+    <tr><td>第 4 步</td><td>类别按钮显示当前类别</td><td>事件参数 <code>e.sender</code></td></tr>
+    <tr><td>第 5 步</td><td>排错</td><td>常见错误</td></tr>
+  </table></div>
+</section>
+
+<!-- ======================= 第 1 步 ======================= -->
+<section class="screen" data-step="第1步">
+  <p class="kicker">第 1 步 · 点击按钮，执行函数</p>
+  <h2><code>on_click</code>：点击事件</h2>
+  <p>用户在网页上的操作（点击、输入等）叫<b>事件</b>（event）。给按钮加上 <code>on_click=函数名</code>，按钮被点击时，NiceGUI 就会执行这个函数。</p>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th><th>英文意思</th></tr>
+    <tr><td><code>ui.button("提问", on_click=ask)</code></td><td>点击按钮时执行函数 <code>ask</code></td><td>on click = 在点击时</td></tr>
+    <tr><td><code>ui.notify("文字")</code></td><td>在网页下方弹出一条提示，几秒后自动消失</td><td>notify = 通知</td></tr>
+  </table></div>
+  <p>先在 <code>guess_who.py</code> 里试一个最简单的版本（新加的部分用红字标出）：</p>
+  <pre><code>from nicegui import ui
+
+<b>def ask():
+    ui.notify("你点了提问")</b>
+
+ui.label("猜猜我是谁")
+ui.button("提问", <b>on_click=ask</b>)
+
+ui.run()</code></pre>
+  <img class="shot" src="第2课_图/click.png" alt="点击提问后弹出提示">
+  <p class="cap">点击"提问"后，下方弹出提示</p>
+  <div class="hard">
+    <p class="t">难点：<code>on_click=ask</code> 后面不加括号</p>
+    <p style="margin:0"><code>ask</code> 是把函数<b>交给按钮</b>，等点击时再执行；<code>ask()</code> 是<b>马上执行</b>这个函数。例子：写成 <code>on_click=ask()</code>，网页一打开就弹出"你点了提问"，之后再点按钮，什么都不会发生。</p>
+  </div>
+</section>
+
+<section class="screen" data-step="第1步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q1</span>小明把函数写在了按钮的<b>下面</b>，运行后会怎样？</p>
+  <pre><code>from nicegui import ui
+
+ui.label("猜猜我是谁")
+ui.button("提问", on_click=ask)
+
+def ask():
+    ui.notify("你点了提问")
+
+ui.run()</code></pre>
+  <div class="opts">
+    <button>A. 正常运行，点击后弹出提示</button>
+    <button data-right>B. 报错：NameError: name 'ask' is not defined</button>
+    <button>C. 网页能打开，但点击没反应</button>
+  </div>
+  <p class="fb" data-ok="对！Python 从上往下执行，运行到第 4 行时还没有定义 ask。所以函数要写在用到它的按钮上面。" data-no="Python 从上往下执行。运行到 ui.button 那一行时，ask 定义了吗？"></p>
+</div></section>
+
+<!-- ======================= 第 2 步 ======================= -->
+<section class="screen" data-step="第2步">
+  <p class="kicker">第 2 步 · 读出输入框里的内容</p>
+  <h2>把组件存进变量</h2>
+  <p>要读出输入框里的文字，先把输入框<b>存进一个变量</b>，再用 <code>.value</code> 读取它的内容。</p>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th><th>英文意思</th></tr>
+    <tr><td><code>box = ui.input(...)</code></td><td>创建输入框，并存进变量 <code>box</code></td><td></td></tr>
+    <tr><td><code>box.value</code></td><td>输入框里现在的文字（字符串）</td><td>value = 值</td></tr>
+  </table></div>
+  <pre><code>def ask():
+    ui.notify(f"你问了：<b>{box.value}</b>")
+
+<b>box =</b> ui.input(placeholder="输入问题，例如：它会飞吗？")
+ui.button("提问", on_click=ask)</code></pre>
+  <p>输入"它会飞吗？"再点"提问"，下方弹出"你问了：它会飞吗？"。</p>
+  <div class="hard">
+    <p class="t">难点：<code>box</code> 和 <code>box.value</code> 不一样</p>
+    <p style="margin:0"><code>box</code> 是整个输入框组件，<code>box.value</code> 才是框里的文字。例子：如果写成 <code>f"你问了：{box}"</code>，网页上会显示一串组件信息，而不是问题：</p>
+    <img class="shot" src="第2课_图/boxobj.png" alt="错误地显示了组件本身">
+  </div>
+</section>
+
+<section class="screen" data-step="第2步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q2</span>函数 <code>ask</code> 写在输入框的<b>上面</b>，里面却用到了下面才定义的 <code>box</code>。为什么不报错？</p>
+  <pre><code>def ask():
+    ui.notify(f"你问了：{box.value}")
+
+box = ui.input(placeholder="输入问题，例如：它会飞吗？")
+ui.button("提问", on_click=ask)</code></pre>
+  <div class="opts">
+    <button>A. NiceGUI 会自动把函数挪到最后</button>
+    <button data-right>B. 定义函数时不执行里面的代码，等点击时才执行，那时 box 已经存在了</button>
+    <button>C. 其实会报错，只是没显示</button>
+  </div>
+  <p class="fb" data-ok="对！def 只是定义函数，函数体要等调用时才运行。点击按钮时，整个程序已经执行完，box 早就有了。这和 Q1 不同：Q1 是在 ui.button 那一行就要用到 ask。" data-no="想一想：def ask(): 这一行运行时，函数里面的代码会执行吗？"></p>
+</div></section>
+
+<!-- ======================= 第 3 步 ======================= -->
+<section class="screen" data-step="第3步">
+  <p class="kicker">第 3 步 · 把问题显示在网页上</p>
+  <h2>修改组件的文字</h2>
+  <p>弹出提示几秒就消失了。更好的做法是放一个文本组件，点击后<b>修改它的文字</b>。</p>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th></tr>
+    <tr><td><code>result = ui.label("")</code></td><td>创建一个空的文本组件，存进变量 <code>result</code></td></tr>
+    <tr><td><code>result.text = "新文字"</code></td><td>修改文本组件显示的文字，网页立刻更新</td></tr>
+    <tr><td><code>box.value = ""</code></td><td>清空输入框</td></tr>
+  </table></div>
+  <pre><code><b>questions = []</b>
+
+def ask():
+    q = box.value
+    <b>if q == "":
+        ui.notify("请先输入问题")
+    else:
+        questions.append(q)
+        result.text = f"你问了：{q}（一共问了 {len(questions)} 个问题）"
+        box.value = ""</b>
+
+box = ui.input(placeholder="输入问题，例如：它会飞吗？")
+ui.button("提问", on_click=ask)
+<b>result = ui.label("")</b></code></pre>
+  <p>每问一个问题，就存进列表 <code>questions</code>，用 <code>len</code> 统计个数。输入框是空的就提示，不记录：</p>
+  <img class="shot" src="第2课_图/empty.png" alt="没输入就点提问">
+  <p class="cap">没输入就点"提问"，弹出"请先输入问题"</p>
+</section>
+
+<section class="screen" data-step="第3步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q3</span>按顺序做了下面 4 件事，最后网页上 <code>result</code> 显示什么？</p>
+  <ol>
+    <li>输入"它会飞吗？"，点"提问"</li>
+    <li>什么都不输入，点"提问"</li>
+    <li>输入"它是黑色的吗？"，点"提问"</li>
+    <li>什么都不输入，点"提问"</li>
+  </ol>
+  <div class="opts">
+    <button>A. 你问了：（一共问了 4 个问题）</button>
+    <button data-right>B. 你问了：它是黑色的吗？（一共问了 2 个问题）</button>
+    <button>C. 请先输入问题</button>
+  </div>
+  <p class="fb" data-ok="对！输入为空时走 if 分支，只弹提示，不往列表里加，也不改 result。所以列表里只有 2 个问题，result 停在第 3 次的内容。" data-no="输入为空时，程序走哪个分支？那个分支改了 result 吗？"></p>
+</div></section>
+
+<section class="screen" data-step="第3步"><div class="q">
+  <p class="qh"><span class="n">Q4</span>动手写：仿照 <code>ask</code>，写一个函数 <code>guess</code>，交给"我猜是它"按钮。</p>
+  <p>要求：输入框为空时弹出"请先输入你猜的东西"；否则 <code>result</code> 显示"你猜的是：（输入的内容）"，并清空输入框。</p>
+  <button class="reveal">看答案</button>
+  <div class="ans"><p class="lab">参考答案</p><pre><code>def guess():
+    g = box.value
+    if g == "":
+        ui.notify("请先输入你猜的东西")
+    else:
+        result.text = f"你猜的是：{g}"
+        box.value = ""
+
+ui.button("我猜是它", on_click=guess)</code></pre><p>别忘了 <code>def guess</code> 要写在 <code>ui.button("我猜是它", ...)</code> 的上面。</p></div>
+</div></section>
+
+<!-- ======================= 第 4 步 ======================= -->
+<section class="screen" data-step="第4步">
+  <p class="kicker">第 4 步 · 类别按钮</p>
+  <h2>多个按钮共用一个函数</h2>
+  <p>三个类别按钮是用循环生成的，它们可以共用同一个函数。函数加一个参数 <code>e</code>，NiceGUI 会把这次点击的信息传进来。</p>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th><th>英文意思</th></tr>
+    <tr><td><code>def choose(e):</code></td><td><code>e</code> 是<b>事件参数</b>，装着这次点击的信息</td><td>e = event 事件</td></tr>
+    <tr><td><code>e.sender</code></td><td>被点击的那个按钮</td><td>sender = 发出者</td></tr>
+    <tr><td><code>e.sender.text</code></td><td>那个按钮上的文字，例如"食物"</td><td></td></tr>
+  </table></div>
+  <pre><code><b>def choose(e):
+    category.text = f"当前类别：{e.sender.text}"</b>
+
+categories = ["动物", "食物", "物品"]
+for c in categories:
+    ui.button(c, <b>on_click=choose</b>)
+<b>category = ui.label("当前类别：动物")</b></code></pre>
+  <div class="hard">
+    <p class="t">难点：一个函数怎么知道点的是哪个按钮？</p>
+    <p style="margin:0">三个按钮交给的是同一个 <code>choose</code>，但每次点击传进来的 <code>e</code> 不同：点"食物"时，<code>e.sender</code> 就是"食物"按钮，<code>e.sender.text</code> 就是 <code>"食物"</code>。所以 <code>category</code> 显示"当前类别：食物"。</p>
+  </div>
+  <p>到这里，本课的完整代码已经写好了：</p>
+  <button class="reveal">看本课完整代码</button>
+  <div class="ans"><pre><code>from nicegui import ui
+
+questions = []
+
+def choose(e):
+    category.text = f"当前类别：{e.sender.text}"
+
+def ask():
+    q = box.value
+    if q == "":
+        ui.notify("请先输入问题")
+    else:
+        questions.append(q)
+        result.text = f"你问了：{q}（一共问了 {len(questions)} 个问题）"
+        box.value = ""
+
+def guess():
+    g = box.value
+    if g == "":
+        ui.notify("请先输入你猜的东西")
+    else:
+        result.text = f"你猜的是：{g}"
+        box.value = ""
+
+ui.label("猜猜我是谁")
+ui.label("我心里想好了一个东西，你来猜！")
+
+categories = ["动物", "食物", "物品"]
+for c in categories:
+    ui.button(c, on_click=choose)
+category = ui.label("当前类别：动物")
+
+box = ui.input(placeholder="输入问题，例如：它会飞吗？")
+ui.button("提问", on_click=ask)
+ui.button("我猜是它", on_click=guess)
+result = ui.label("")
+
+ui.run()</code></pre></div>
+</section>
+
+<section class="screen" data-step="第4步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q5</span>如果把 <code>choose</code> 改成下面这样，点"物品"按钮后，<code>category</code> 显示什么？</p>
+  <pre><code>def choose(e):
+    category.text = f"你选了 {e.sender.text}，共有 {len(categories)} 个类别"</code></pre>
+  <div class="opts">
+    <button>A. 你选了 e.sender.text，共有 3 个类别</button>
+    <button data-right>B. 你选了 物品，共有 3 个类别</button>
+    <button>C. 你选了 动物，共有 3 个类别</button>
+  </div>
+  <p class="fb" data-ok="对！e.sender 是被点击的「物品」按钮；len(categories) 是列表的长度 3。" data-no="e.sender 是哪个按钮？是被点的那个，还是第一个？"></p>
+</div></section>
+
+<!-- ======================= 第 5 步 ======================= -->
+<section class="screen" data-step="第5步"><div class="q" data-choice>
+  <p class="kicker">第 5 步 · 排错</p>
+  <p class="qh"><span class="n">Q6</span>输入问题后点"提问"，网页上一直显示"还没有问题"，终端也<b>没有报错</b>。问题出在哪里？</p>
+  <pre><code>def ask():
+    result.value = f"你问了：{box.value}"
+
+box = ui.input(placeholder="输入问题")
+ui.button("提问", on_click=ask)
+result = ui.label("还没有问题")</code></pre>
+  <img class="shot" src="第2课_图/labelvalue.png" alt="点击后文字没有变化">
+  <div class="opts">
+    <button>A. box.value 应该改成 box.text</button>
+    <button data-right>B. 文本组件要改 .text，不是 .value</button>
+    <button>C. result 要写在 ask 的上面</button>
+  </div>
+  <p class="fb" data-ok="对！文本组件显示的是 .text。写成 result.value，Python 只是给 result 多加了一个叫 value 的属性，网页不会变化，也不报错，所以很难发现。记住：输入框读 .value，文本改 .text。" data-no="ui.label 显示的文字存在哪个属性里？回看第 3 步的表格。"></p>
+</div></section>
+
+<section class="screen" data-step="第5步"><div class="q" data-choice>
+  <p class="kicker">第 5 步 · 排错</p>
+  <p class="qh"><span class="n">Q7</span>点"提问"后网页没变化，终端出现了下面的报错。应该怎么改？</p>
+  <pre><code>1  from nicegui import ui
+2
+3  def ask():
+4      result.text = f"你问了：{box.text}"
+5
+6  box = ui.input(placeholder="输入问题")
+7  ui.button("提问", on_click=ask)
+8  result = ui.label("还没有问题")</code></pre>
+  <pre><code>  File "guess_who.py", line 4, in ask
+    result.text = f"你问了：{box.text}"
+                             ^^^^^^^^
+AttributeError: 'Input' object has no attribute 'text'</code></pre>
+  <div class="opts">
+    <button data-right>A. 把 box.text 改成 box.value</button>
+    <button>B. 把 result.text 改成 result.value</button>
+    <button>C. 把 ui.input 改成 ui.label</button>
+  </div>
+  <p class="fb" data-ok="对！'Input' object has no attribute 'text' 意思是「输入框没有 text 这个属性」，输入框的内容在 .value 里。^ 指着的正是 box.text。" data-no="看 ^ 指着哪里，报错说哪个组件没有 text？"></p>
+</div></section>
+
+<!-- ======================= 完成 ======================= -->
+<section class="screen" data-step="完成">
+  <p class="big">🎉</p>
+  <h2>第 2 课完成</h2>
+  <p>按钮都能响应点击了。选择题一次答对 <b id="finalOk">0</b> / <b id="finalAll">0</b>。</p>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th></tr>
+    <tr><td><code>ui.button("...", on_click=函数名)</code></td><td>点击时执行函数，函数名后不加括号</td></tr>
+    <tr><td><code>ui.notify("...")</code></td><td>弹出提示</td></tr>
+    <tr><td><code>box = ui.input(...)</code> / <code>box.value</code></td><td>把组件存进变量 / 读输入框内容</td></tr>
+    <tr><td><code>result.text = "..."</code></td><td>修改文本组件的文字</td></tr>
+    <tr><td><code>def choose(e):</code> / <code>e.sender</code></td><td>事件参数 / 被点击的组件</td></tr>
+  </table></div>
+  <p>两条规律：<b>函数要定义在用到它的按钮上面</b>；<b>输入框读 <code>.value</code>，文本改 <code>.text</code></b>。</p>
+  <div class="mission">
+    <p class="kicker">下一课预告</p>
+    <p style="margin:0">现在所有组件竖着排成一列，问过的问题也只显示最后一个。第 3 课学排版：把按钮排成一行，加上卡片和聊天气泡，让每个问题都留在聊天记录里。</p>
+  </div>
+</section>
+
+</div>
+
+<div class="nav"><div class="in">
+  <button id="prev">← 上一页</button>
+  <span class="hint" id="hint"></span>
+  <button id="next" class="go">下一页 →</button>
+</div></div>
+
+<script>
+const screens = [...document.querySelectorAll(".screen")];
+const steps = [...new Set(screens.map(s => s.dataset.step))];
+const chips = document.getElementById("chips");
+const prev = document.getElementById("prev"), next = document.getElementById("next"), hint = document.getElementById("hint");
+const choiceQs = document.querySelectorAll("[data-choice]");
+let ok = 0, cur = 0;
+document.getElementById("scoreAll").textContent = choiceQs.length;
+document.getElementById("finalAll").textContent = choiceQs.length;
+
+steps.forEach(name => {
+  const b = document.createElement("button");
+  b.textContent = name;
+  b.onclick = () => go(screens.findIndex(s => s.dataset.step === name));
+  chips.appendChild(b);
+});
+
+choiceQs.forEach(q => {
+  const fb = q.querySelector(".fb");
+  let first = true;
+  q.querySelectorAll(".opts button").forEach(b => {
+    b.onclick = () => {
+      const right = b.hasAttribute("data-right");
+      q.dataset.answered = "1";
+      if (right) {
+        b.classList.add("right");
+        fb.className = "fb ok"; fb.textContent = "✅ " + fb.dataset.ok;
+        if (first) { ok++; document.getElementById("scoreOk").textContent = ok; document.getElementById("finalOk").textContent = ok; }
+      } else {
+        b.classList.add("wrong");
+        fb.className = "fb no"; fb.textContent = "❌ " + fb.dataset.no;
+      }
+      first = false;
+      update();
+    };
+  });
+});
+
+document.querySelectorAll(".reveal").forEach(b => {
+  b.dataset.label = b.textContent;
+  b.onclick = () => {
+    const a = b.nextElementSibling;
+    a.classList.toggle("show");
+    b.textContent = a.classList.contains("show") ? "收起" : b.dataset.label;
+  };
+});
+
+function update() {
+  const s = screens[cur];
+  const q = s.querySelector("[data-choice]");
+  const locked = q && !q.dataset.answered;
+  prev.disabled = cur === 0;
+  next.disabled = locked || cur === screens.length - 1;
+  const isQ = s.querySelector(".q");
+  next.textContent = cur === 0 ? "开始 →" : isQ ? "下一题 →" : "下一页 →";
+  hint.textContent = locked ? "先选一个答案" : `${cur + 1} / ${screens.length}`;
+  const si = steps.indexOf(s.dataset.step);
+  [...chips.children].forEach((c, i) => { c.className = i === si ? "now" : i < si ? "past" : ""; });
+  document.getElementById("bar").style.width = (cur / (screens.length - 1) * 100) + "%";
+}
+
+function go(i) {
+  if (i < 0 || i >= screens.length) return;
+  screens[cur].classList.remove("show");
+  cur = i;
+  screens[cur].classList.add("show");
+  window.scrollTo(0, 0);
+  try { localStorage.setItem("lesson2-pos", cur); } catch (e) {}
+  update();
+}
+
+prev.onclick = () => go(cur - 1);
+next.onclick = () => go(cur + 1);
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" && !next.disabled) go(cur + 1);
+  if (e.key === "ArrowLeft" && !prev.disabled) go(cur - 1);
+});
+
+let start = 0;
+try { start = Math.min(parseInt(localStorage.getItem("lesson2-pos")) || 0, screens.length - 1); } catch (e) {}
+screens[start].classList.add("show"); cur = start; update();
+</script>
+</body>
+</html>

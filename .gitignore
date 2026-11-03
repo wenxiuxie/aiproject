@@ -1,0 +1,7 @@
+# 绝对不能上传：API key、测试工具
+key.txt
+*.key
+.env
+_tools/
+__pycache__/
+*.run.py

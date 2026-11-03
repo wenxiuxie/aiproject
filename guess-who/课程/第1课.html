@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 1 课 · 搭起游戏界面</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Noto+Serif+SC:wght@700&family=JetBrains+Mono&display=swap">
+<style>
+:root{--bg:#f6f7f5;--paper:#fff;--fg:#1d2520;--muted:#5d6a62;--line:#dde3de;--ink:#b4232f;--ink-soft:#fbe9ea;--code:#eef2ef;--ok:#1f7a4d;--ok-soft:#e3f4ea;--blue:#2f5f9e;--blue-soft:#e8eff8;--hard:#8a5a00;--hard-soft:#fdf3dc;
+--display:"Noto Serif SC","Songti SC",serif;--body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;--mono:"JetBrains Mono",Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#141a17;--paper:#1b231f;--fg:#e4ebe6;--muted:#9aa8a0;--line:#2c3832;--ink:#f0707a;--ink-soft:#3a1f22;--code:#111714;--ok:#5fd39a;--ok-soft:#173326;--blue:#8db4ea;--blue-soft:#1a2738;--hard:#f0c060;--hard-soft:#33290f;color-scheme:dark}}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.75;margin:0}
+.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .in{max-width:820px;margin:0 auto;padding:8px 16px}
+.top .row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.top .row b{color:var(--fg)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 4px}
+.chips button{font:inherit;font-size:12px;padding:1px 9px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--muted);cursor:pointer}
+.chips button.now{border-color:var(--ink);color:var(--ink);font-weight:700}
+.chips button.past{color:var(--ok);border-color:var(--ok)}
+.bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink);width:0;transition:width .25s}
+.wrap{max-width:820px;margin:0 auto;padding:22px 16px 120px}
+.screen{display:none}
+.screen.show{display:block}
+h1{font-family:var(--display);font-size:30px;line-height:1.3;margin:0 0 8px}
+h2{font-family:var(--display);font-size:24px;margin:0 0 10px}
+h3{font-size:17px;margin:22px 0 6px}
+.kicker{font-size:12px;letter-spacing:.08em;color:var(--ink);font-weight:700;margin:0 0 4px}
+.story p{font-size:17px}
+.mission{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--ink);border-radius:8px;padding:12px 16px;margin:18px 0}
+.route{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px;margin:10px 0}
+.route div{font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+.route div b{font-family:var(--mono);color:var(--ink);margin-right:4px}
+.route div.now{border-color:var(--ink)}
+pre{background:var(--code);font-family:var(--mono);font-size:14px;line-height:1.6;padding:12px 14px;border-radius:6px;overflow-x:auto;margin:10px 0}
+code{font-family:var(--mono);font-size:.92em;background:var(--code);padding:1px 5px;border-radius:4px}
+pre code{background:none;padding:0}
+pre b{color:var(--ink)}
+img.shot{display:block;max-width:100%;border:1px solid var(--line);border-radius:6px;margin:8px 0 4px;background:#fff}
+img.shot.narrow{max-width:420px}
+.cap{font-size:13px;color:var(--muted);margin:0 0 12px}
+.note{background:var(--blue-soft);border-radius:6px;padding:10px 14px;margin:12px 0;font-size:15px}
+.hard{background:var(--hard-soft);border-radius:6px;padding:10px 14px;margin:14px 0;font-size:15px}
+.hard .t{font-weight:700;color:var(--hard);margin:0 0 4px}
+.hard pre{background:var(--paper)}
+table{border-collapse:collapse;margin:10px 0;font-size:15px;width:100%}
+td,th{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--paper);white-space:nowrap}
+.tbl{overflow-x:auto}
+.q .qh{font-weight:700;font-size:18px;margin:0 0 8px;display:flex;gap:10px;flex-wrap:wrap;align-items:baseline}
+.q .qh .n{font-family:var(--mono);color:var(--ink)}
+.q .qh .st{font-size:13px;color:var(--muted);font-weight:400}
+.opts{display:grid;gap:8px;margin:12px 0 0}
+.opts button{font:inherit;text-align:left;padding:10px 14px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--fg);cursor:pointer}
+.opts button:hover{border-color:var(--blue)}
+.opts button.right{border-color:var(--ok);background:var(--ok-soft)}
+.opts button.wrong{border-color:var(--ink);background:var(--ink-soft)}
+.fb{margin:12px 0 0;font-size:15px;min-height:1.5em}
+.fb.ok{color:var(--ok)}.fb.no{color:var(--ink)}
+.reveal{font:inherit;font-size:14px;margin:12px 0 0;padding:6px 14px;border:1px solid var(--blue);color:var(--blue);background:transparent;border-radius:6px;cursor:pointer}
+.ans{display:none;margin-top:10px;border-left:3px solid var(--ok);padding:2px 0 2px 12px}
+.ans.show{display:block}
+.ans .lab{font-size:12px;letter-spacing:.06em;color:var(--ok);font-weight:700;margin:0}
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);z-index:5}
+.nav .in{max-width:820px;margin:0 auto;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.nav button{font:inherit;font-size:15px;padding:8px 20px;border-radius:6px;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--fg)}
+.nav button.go{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+.nav button:disabled{opacity:.4;cursor:not-allowed}
+.nav .hint{font-size:13px;color:var(--muted);text-align:center;flex:1}
+.stepintro{font-size:17px}
+.big{font-size:40px;margin:0}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="in">
+  <div class="row"><span><b>第 1 课</b> · 搭起游戏界面</span><span>选择题一次答对：<b id="scoreOk">0</b> / <b id="scoreAll">0</b></span></div>
+  <div class="chips" id="chips"></div>
+  <div class="bar"><i id="bar"></i></div>
+</div></div>
+
+<div class="wrap" id="screens">
+
+<!-- ======================= 故事 ======================= -->
+<section class="screen story" data-step="故事">
+  <p class="kicker">项目 · 「猜猜我是谁」AI 游戏</p>
+  <h1>一个守着秘密的 AI，<br>和一个想拆穿它的你</h1>
+  <p>你玩过这个游戏吗？一个人心里想好一样东西，另一个人只能问「是不是」的问题——「它会飞吗？」「它比书包大吗？」——用尽量少的问题猜出答案。</p>
+  <p>这一次，坐在你对面的不是人，而是一个 <b>AI</b>。游戏一开始，电脑悄悄选好一个东西，只告诉 AI。AI 知道答案，但它<b>只能回答「是」「不是」「不确定」</b>。你有 <b>10 次机会</b>，每问一个问题、每猜错一次，都会用掉一次。</p>
+  <p>这个游戏现在还不存在。<b>接下来 8 课，你要亲手把它写出来。</b></p>
+  <img class="shot narrow" src="第1课_图/final.png" alt="完成后的猜猜我是谁游戏">
+  <p class="cap">第 8 课结束时，你写出来的游戏就是这样（真实运行截图）</p>
+  <div class="route">
+    <div class="now"><b>1</b>搭起游戏界面 ← 今天</div>
+    <div><b>2</b>让按钮响应点击</div>
+    <div><b>3</b>排版与聊天气泡</div>
+    <div><b>4</b>字典：游戏的记事本</div>
+    <div><b>5</b>第一次调用 AI</div>
+    <div><b>6</b>让 AI 记住对话</div>
+    <div><b>7</b>给 AI 立规矩</div>
+    <div><b>8</b>完成「猜猜我是谁」</div>
+  </div>
+</section>
+
+<section class="screen" data-step="故事">
+  <p class="kicker">第 1 课任务</p>
+  <h2>写出游戏的界面</h2>
+  <p>今天在一个新文件 <code>guess_who.py</code> 里，分 4 步写出下面这个界面，第 5 步练习排查常见错误。这个文件以后每节课都会接着改，最后变成完整的游戏。</p>
+  <img class="shot" src="第1课_图/game1.png" alt="本课要做出的界面">
+  <p class="cap">本课完成后的界面（按钮暂时点不动，第 2 课再接上）</p>
+  <div class="tbl"><table>
+    <tr><th>步骤</th><th>加上什么</th><th>新学的代码</th></tr>
+    <tr><td>第 1 步</td><td>让网页跑起来，显示标题</td><td><code>import</code>、<code>ui.run()</code></td></tr>
+    <tr><td>第 2 步</td><td>说明文字</td><td><code>ui.label</code></td></tr>
+    <tr><td>第 3 步</td><td>提问输入框</td><td><code>ui.input</code></td></tr>
+    <tr><td>第 4 步</td><td>类别按钮、提问按钮</td><td><code>ui.button</code> + 循环</td></tr>
+    <tr><td>第 5 步</td><td>排错</td><td>读懂报错信息</td></tr>
+  </table></div>
+</section>
+
+<!-- ======================= 第 1 步 ======================= -->
+<section class="screen" data-step="第1步">
+  <p class="kicker">第 1 步 · 让网页跑起来</p>
+  <h2>三行代码，打开第一个网页</h2>
+  <p><b>NiceGUI</b> 是一个 Python 第三方库，用来写网页界面：<b>调用一个函数，网页上就生成一个组件</b>（文本、按钮、输入框等）。</p>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th><th>英文意思</th></tr>
+    <tr><td><code>pip install nicegui</code></td><td>在终端里安装 NiceGUI，一台电脑只需装一次</td><td>install = 安装</td></tr>
+    <tr><td><code>from nicegui import ui</code></td><td>导入 <code>ui</code> 模块，每个程序第一行都要写</td><td>import = 导入</td></tr>
+    <tr><td><code>ui.run()</code></td><td>启动网页服务器并打开浏览器，写在最后一行</td><td>run = 运行</td></tr>
+  </table></div>
+  <p>新建 <code>guess_who.py</code>，写入：</p>
+  <pre><code>from nicegui import ui
+
+ui.label("猜猜我是谁")
+
+ui.run()</code></pre>
+  <p>点 VS Code 右上角 ▶ 运行，浏览器会自动打开 <code>http://localhost:8080</code>：</p>
+  <img class="shot" src="第1课_图/step1.png" alt="第1步运行结果">
+  <div class="tbl"><table>
+    <tr><th>操作</th><th>怎么做</th></tr>
+    <tr><td>修改代码</td><td>改完按 <b>Ctrl + S</b> 保存，网页自动刷新，不用重新运行</td></tr>
+    <tr><td>停止程序</td><td>点击终端，按 <b>Ctrl + C</b>（只关浏览器，程序还在运行）</td></tr>
+  </table></div>
+</section>
+
+<section class="screen" data-step="第1步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q1</span>如果删掉最后一行 <code>ui.run()</code> 再运行，会怎样？<span class="st">先猜，再动手试</span></p>
+  <div class="opts">
+    <button>A. 终端报错</button>
+    <button data-right>B. 不报错，但程序马上结束，浏览器不会打开</button>
+    <button>C. 网页照样打开</button>
+  </div>
+  <p class="fb" data-ok="对！组件写好了，但没有启动网页服务器，程序运行完就直接结束。这种问题不报错，所以更难发现——网页没出来时，先检查最后一行。" data-no="删掉它运行一下，看看终端和浏览器。"></p>
+</div></section>
+
+<!-- ======================= 第 2 步 ======================= -->
+<section class="screen" data-step="第2步">
+  <p class="kicker">第 2 步 · 加说明文字</p>
+  <h2><code>ui.label</code>：文本组件</h2>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>网页上出现什么</th><th>英文意思</th></tr>
+    <tr><td><code>ui.label("你好")</code></td><td>一行文本：你好</td><td>label = 标签</td></tr>
+  </table></div>
+  <p>第 1 步的标题用的就是它。现在在标题下面再加一行说明：</p>
+  <pre><code>from nicegui import ui
+
+ui.label("猜猜我是谁")
+<b>ui.label("我心里想好了一个东西，你来猜！")</b>
+
+ui.run()</code></pre>
+  <img class="shot" src="第1课_图/step2.png" alt="第2步运行结果">
+  <p class="cap">组件默认<b>从上到下</b>排列，顺序和代码顺序一致</p>
+  <div class="hard">
+    <p class="t">难点：文字必须加引号</p>
+    <p style="margin:0">加了引号是<b>字符串</b>（string），原样显示；不加引号，Python 会把它当成<b>变量名</b>去找。例子：</p>
+    <pre><code>ui.label("猜猜我是谁")   # 正确：显示 猜猜我是谁
+ui.label(猜猜我是谁)     # 报错：NameError: name '猜猜我是谁' is not defined</code></pre>
+  </div>
+</section>
+
+<section class="screen" data-step="第2步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q2</span>以后游戏里要显示剩余机会。下面三行，网页上依次显示什么？</p>
+  <pre><code>chances = 10
+ui.label("chances")
+ui.label(chances)
+ui.label(f"剩余机会：{chances}")</code></pre>
+  <div class="opts">
+    <button data-right>A. chances / 10 / 剩余机会：10</button>
+    <button>B. 10 / 10 / 剩余机会：10</button>
+    <button>C. chances / chances / 剩余机会：{chances}</button>
+  </div>
+  <p class="fb" data-ok="对！加引号的 &quot;chances&quot; 是字符串，原样显示；不加引号的 chances 是变量，显示它的值 10；f-string 会把 {chances} 替换成变量的值。" data-no="注意第 2 行和第 3 行：一个是字符串，一个是变量。"></p>
+  <button class="reveal">看运行截图</button>
+  <div class="ans"><img class="shot" src="第1课_图/chances.png" alt="运行结果"></div>
+</div></section>
+
+<section class="screen" data-step="第2步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q3</span>小明写成了 <code>ui.label(猜猜我是谁)</code>，运行后会怎样？</p>
+  <div class="opts">
+    <button>A. 照样显示"猜猜我是谁"</button>
+    <button data-right>B. 报错：NameError: name '猜猜我是谁' is not defined</button>
+    <button>C. 显示一个空白</button>
+  </div>
+  <p class="fb" data-ok="对！没有引号，Python 把它当成变量名，但程序里没有这个变量。NameError 表示「这个名字没有定义」。" data-no="不加引号时，Python 会把它当成什么？"></p>
+</div></section>
+
+<!-- ======================= 第 3 步 ======================= -->
+<section class="screen" data-step="第3步">
+  <p class="kicker">第 3 步 · 加提问输入框</p>
+  <h2><code>ui.input</code>：输入框组件</h2>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>网页上出现什么</th><th>英文意思</th></tr>
+    <tr><td><code>ui.input(placeholder="请输入")</code></td><td>一个输入框，没输入时显示灰色的"请输入"</td><td>input = 输入<br>placeholder = 占位文字</td></tr>
+  </table></div>
+  <pre><code>from nicegui import ui
+
+ui.label("猜猜我是谁")
+ui.label("我心里想好了一个东西，你来猜！")
+<b>ui.input(placeholder="输入问题，例如：它会飞吗？")</b>
+
+ui.run()</code></pre>
+  <img class="shot" src="第1课_图/step3.png" alt="第3步运行结果">
+  <p class="cap">输入框默认较窄，占位文字显示不全是正常的，第 3 课学排版时再调宽</p>
+  <div class="hard">
+    <p class="t">难点：<code>placeholder=</code> 为什么要写出名字？</p>
+    <p style="margin:0">输入框有好几个可设置的参数，<code>placeholder="..."</code> 这种"<b>参数名=值</b>"的写法叫<b>关键字参数</b>，用来指明设置的是哪一项。占位文字只是提示，玩家一打字它就消失，不会被当成输入的内容。</p>
+  </div>
+</section>
+
+<section class="screen" data-step="第3步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q4</span>把 <code>ui.input(...)</code> 这一行移到 <code>ui.label("猜猜我是谁")</code> 的<b>上面</b>，网页会怎样？<span class="st">先猜，再动手试</span></p>
+  <div class="opts">
+    <button data-right>A. 输入框到了最上面，标题和说明在它下面</button>
+    <button>B. 没有变化，输入框还在最下面</button>
+    <button>C. 报错</button>
+  </div>
+  <p class="fb" data-ok="对！组件的排列顺序就是代码的执行顺序。试完记得把它移回去。" data-no="回想第 2 步：组件按什么顺序排列？"></p>
+</div></section>
+
+<!-- ======================= 第 4 步 ======================= -->
+<section class="screen" data-step="第4步">
+  <p class="kicker">第 4 步 · 加按钮</p>
+  <h2><code>ui.button</code>：按钮组件</h2>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>网页上出现什么</th><th>英文意思</th></tr>
+    <tr><td><code>ui.button("开始")</code></td><td>一个按钮，上面写着"开始"</td><td>button = 按钮</td></tr>
+  </table></div>
+  <p>游戏需要三个类别按钮（动物、食物、物品），还有"提问""我猜是它"两个按钮。类别按钮用<b>列表 + for 循环</b>生成：</p>
+  <pre><code>from nicegui import ui
+
+ui.label("猜猜我是谁")
+ui.label("我心里想好了一个东西，你来猜！")
+
+<b>categories = ["动物", "食物", "物品"]
+for c in categories:
+    ui.button(c)</b>
+
+ui.input(placeholder="输入问题，例如：它会飞吗？")
+<b>ui.button("提问")
+ui.button("我猜是它")</b>
+
+ui.run()</code></pre>
+  <img class="shot" src="第1课_图/game1.png" alt="第4步运行结果">
+  <div class="hard">
+    <p class="t">难点：用循环生成组件</p>
+    <p style="margin:0">循环体每执行一次，就调用一次 <code>ui.button(c)</code>，网页上就多一个按钮。列表有 3 个元素，就生成 3 个按钮。以后要加类别，只需改列表，不用多写 <code>ui.button</code>。</p>
+  </div>
+  <div class="note">💡 按钮上的<b>英文</b>默认显示成大写，例如 <code>ui.button("start")</code> 显示为 START，中文不受影响。</div>
+</section>
+
+<section class="screen" data-step="第4步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q5</span>把列表改成下面这样，网页上<b>一共</b>有几个按钮？</p>
+  <pre><code>categories = ["动物", "食物", "物品", "地点"]
+for c in categories:
+    ui.button(c)
+
+ui.input(placeholder="输入问题，例如：它会飞吗？")
+ui.button("提问")
+ui.button("我猜是它")</code></pre>
+  <div class="opts">
+    <button>A. 3 个</button>
+    <button>B. 4 个</button>
+    <button data-right>C. 6 个</button>
+  </div>
+  <p class="fb" data-ok="对！循环生成 4 个类别按钮，再加上「提问」和「我猜是它」，一共 6 个。" data-no="别忘了循环后面还有两个按钮。"></p>
+</div></section>
+
+<section class="screen" data-step="第4步"><div class="q">
+  <p class="qh"><span class="n">Q6</span>在 <code>guess_who.py</code> 里动手改：在类别按钮的<b>后面</b>、输入框的<b>前面</b>，加一个"新游戏"按钮。</p>
+  <p>改完保存，看网页上"新游戏"是不是出现在"物品"和输入框之间。</p>
+  <button class="reveal">看答案</button>
+  <div class="ans"><p class="lab">参考答案</p><pre><code>categories = ["动物", "食物", "物品"]
+for c in categories:
+    ui.button(c)
+ui.button("新游戏")          # 写在循环外面，不缩进
+
+ui.input(placeholder="输入问题，例如：它会飞吗？")</code></pre><p>注意 <code>ui.button("新游戏")</code> <b>不能缩进</b>。如果缩进到循环里，它会跟着循环执行 3 次，出现 3 个"新游戏"按钮。</p></div>
+</div></section>
+
+<!-- ======================= 第 5 步 ======================= -->
+<section class="screen" data-step="第5步"><div class="q" data-choice>
+  <p class="kicker">第 5 步 · 排错</p>
+  <p class="qh"><span class="n">Q7</span>运行后终端报错了，问题出在哪里？</p>
+  <pre><code>from nicegui import ui
+
+ui.lable("猜猜我是谁")
+ui.run()</code></pre>
+  <pre><code>AttributeError: module 'nicegui.ui' has no attribute 'lable'. Did you mean: 'table'?</code></pre>
+  <div class="opts">
+    <button>A. 文字要用单引号，不能用双引号</button>
+    <button data-right>B. label 拼错了，写成了 lable</button>
+    <button>C. 应该改成 ui.table</button>
+  </div>
+  <p class="fb" data-ok="对！AttributeError 表示「ui 模块里没有叫 lable 的东西」。改成 ui.label(&quot;猜猜我是谁&quot;) 就好了。报错里的 Did you mean 只是 Python 猜的，不一定对。" data-no="看报错：has no attribute 'lable'，ui 里没有哪个名字？"></p>
+</div></section>
+
+<section class="screen" data-step="第5步"><div class="q" data-choice>
+  <p class="kicker">第 5 步 · 排错</p>
+  <p class="qh"><span class="n">Q8</span>这段代码报错了，问题出在哪里？</p>
+  <pre><code>1  from nicegui import ui
+2
+3  ui.label("猜猜我是谁")
+4  ui.button("提问"
+5
+6  ui.run()</code></pre>
+  <pre><code>  File "guess_who.py", line 4
+    ui.button("提问"
+             ^
+SyntaxError: '(' was never closed</code></pre>
+  <div class="opts">
+    <button>A. 第 3 行：label 后面不能接 button</button>
+    <button data-right>B. 第 4 行：少了右括号 )</button>
+    <button>C. 第 6 行：ui.run() 写错了</button>
+  </div>
+  <p class="fb" data-ok="对！SyntaxError 是语法错误，'(' was never closed 意思是「左括号没有闭合」。改成 ui.button(&quot;提问&quot;)。读报错时，先看 line 几，再看 ^ 指着哪里。" data-no="看报错的第一行：line 几？再看 ^ 指着哪个符号。"></p>
+</div></section>
+
+<!-- ======================= 完成 ======================= -->
+<section class="screen" data-step="完成">
+  <p class="big">🎉</p>
+  <h2>第 1 课完成</h2>
+  <p>游戏界面已经搭好。选择题一次答对 <b id="finalOk">0</b> / <b id="finalAll">0</b>。</p>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th></tr>
+    <tr><td><code>from nicegui import ui</code></td><td>导入 NiceGUI 的 ui 模块</td></tr>
+    <tr><td><code>ui.label("...")</code></td><td>文本组件</td></tr>
+    <tr><td><code>ui.input(placeholder="...")</code></td><td>输入框组件，placeholder 是占位文字</td></tr>
+    <tr><td><code>ui.button("...")</code></td><td>按钮组件</td></tr>
+    <tr><td><code>ui.run()</code></td><td>启动网页服务器，写在最后一行</td></tr>
+  </table></div>
+  <p>两条规律：<b>代码顺序 = 组件排列顺序</b>；<b>变量、循环等学过的 Python 都可以用来生成组件</b>。</p>
+  <div class="mission">
+    <p class="kicker">下一课预告</p>
+    <p style="margin:0">现在点击按钮还没有反应。第 2 课，你要让按钮响应点击：点一下"提问"，程序读出输入框里的问题，并在网页上显示出来。</p>
+  </div>
+</section>
+
+</div>
+
+<div class="nav"><div class="in">
+  <button id="prev">← 上一页</button>
+  <span class="hint" id="hint"></span>
+  <button id="next" class="go">下一页 →</button>
+</div></div>
+
+<script>
+const screens = [...document.querySelectorAll(".screen")];
+const steps = [...new Set(screens.map(s => s.dataset.step))];
+const chips = document.getElementById("chips");
+const prev = document.getElementById("prev"), next = document.getElementById("next"), hint = document.getElementById("hint");
+const choiceQs = document.querySelectorAll("[data-choice]");
+let ok = 0, cur = 0;
+document.getElementById("scoreAll").textContent = choiceQs.length;
+document.getElementById("finalAll").textContent = choiceQs.length;
+
+steps.forEach(name => {
+  const b = document.createElement("button");
+  b.textContent = name;
+  b.onclick = () => go(screens.findIndex(s => s.dataset.step === name));
+  chips.appendChild(b);
+});
+
+choiceQs.forEach(q => {
+  const fb = q.querySelector(".fb");
+  let first = true;
+  q.querySelectorAll(".opts button").forEach(b => {
+    b.onclick = () => {
+      const right = b.hasAttribute("data-right");
+      q.dataset.answered = "1";
+      if (right) {
+        b.classList.add("right");
+        fb.className = "fb ok"; fb.textContent = "✅ " + fb.dataset.ok;
+        if (first) { ok++; document.getElementById("scoreOk").textContent = ok; document.getElementById("finalOk").textContent = ok; }
+      } else {
+        b.classList.add("wrong");
+        fb.className = "fb no"; fb.textContent = "❌ " + fb.dataset.no;
+      }
+      first = false;
+      update();
+    };
+  });
+});
+
+document.querySelectorAll(".reveal").forEach(b => {
+  b.dataset.label = b.textContent;
+  b.onclick = () => {
+    const a = b.nextElementSibling;
+    a.classList.toggle("show");
+    b.textContent = a.classList.contains("show") ? "收起" : b.dataset.label;
+  };
+});
+
+function update() {
+  const s = screens[cur];
+  const q = s.querySelector("[data-choice]");
+  const locked = q && !q.dataset.answered;
+  prev.disabled = cur === 0;
+  next.disabled = locked || cur === screens.length - 1;
+  const isQ = s.querySelector(".q");
+  next.textContent = cur === 0 ? "开始 →" : isQ ? "下一题 →" : "下一页 →";
+  hint.textContent = locked ? "先选一个答案" : `${cur + 1} / ${screens.length}`;
+  const si = steps.indexOf(s.dataset.step);
+  [...chips.children].forEach((c, i) => { c.className = i === si ? "now" : i < si ? "past" : ""; });
+  document.getElementById("bar").style.width = (cur / (screens.length - 1) * 100) + "%";
+}
+
+function go(i) {
+  if (i < 0 || i >= screens.length) return;
+  screens[cur].classList.remove("show");
+  cur = i;
+  screens[cur].classList.add("show");
+  window.scrollTo(0, 0);
+  try { localStorage.setItem("lesson1v2-pos", cur); } catch (e) {}
+  update();
+}
+
+prev.onclick = () => go(cur - 1);
+next.onclick = () => go(cur + 1);
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" && !next.disabled) go(cur + 1);
+  if (e.key === "ArrowLeft" && !prev.disabled) go(cur - 1);
+});
+
+let start = 0;
+try { start = Math.min(parseInt(localStorage.getItem("lesson1v2-pos")) || 0, screens.length - 1); } catch (e) {}
+screens[start].classList.add("show"); cur = start; update();
+</script>
+</body>
+</html>

@@ -1,0 +1,493 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>第 6 课 · 让 AI 记住对话</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;700&family=Noto+Serif+SC:wght@700&family=JetBrains+Mono&display=swap">
+<style>
+:root{--bg:#f6f7f5;--paper:#fff;--fg:#1d2520;--muted:#5d6a62;--line:#dde3de;--ink:#b4232f;--ink-soft:#fbe9ea;--code:#eef2ef;--ok:#1f7a4d;--ok-soft:#e3f4ea;--blue:#2f5f9e;--blue-soft:#e8eff8;--hard:#8a5a00;--hard-soft:#fdf3dc;
+--display:"Noto Serif SC","Songti SC",serif;--body:"Noto Sans SC","PingFang SC","Microsoft YaHei",sans-serif;--mono:"JetBrains Mono",Consolas,monospace}
+@media (prefers-color-scheme:dark){:root{--bg:#141a17;--paper:#1b231f;--fg:#e4ebe6;--muted:#9aa8a0;--line:#2c3832;--ink:#f0707a;--ink-soft:#3a1f22;--code:#111714;--ok:#5fd39a;--ok-soft:#173326;--blue:#8db4ea;--blue-soft:#1a2738;--hard:#f0c060;--hard-soft:#33290f;color-scheme:dark}}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:16px;line-height:1.75;margin:0}
+.top{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+.top .in{max-width:820px;margin:0 auto;padding:8px 16px}
+.top .row{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;color:var(--muted)}
+.top .row b{color:var(--fg)}
+.chips{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0 4px}
+.chips button{font:inherit;font-size:12px;padding:1px 9px;border:1px solid var(--line);border-radius:999px;background:var(--paper);color:var(--muted);cursor:pointer}
+.chips button.now{border-color:var(--ink);color:var(--ink);font-weight:700}
+.chips button.past{color:var(--ok);border-color:var(--ok)}
+.bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ink);width:0;transition:width .25s}
+.wrap{max-width:820px;margin:0 auto;padding:22px 16px 120px}
+.screen{display:none}
+.screen.show{display:block}
+h1{font-family:var(--display);font-size:30px;line-height:1.3;margin:0 0 8px}
+h2{font-family:var(--display);font-size:24px;margin:0 0 10px}
+h3{font-size:17px;margin:22px 0 6px}
+.kicker{font-size:12px;letter-spacing:.08em;color:var(--ink);font-weight:700;margin:0 0 4px}
+.story p{font-size:17px}
+.mission{background:var(--paper);border:1px solid var(--line);border-left:4px solid var(--ink);border-radius:8px;padding:12px 16px;margin:18px 0}
+.route{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:6px;margin:10px 0}
+.route div{font-size:14px;padding:6px 10px;border:1px solid var(--line);border-radius:6px;background:var(--paper)}
+.route div b{font-family:var(--mono);color:var(--ink);margin-right:4px}
+.route div.now{border-color:var(--ink)}
+pre{background:var(--code);font-family:var(--mono);font-size:14px;line-height:1.6;padding:12px 14px;border-radius:6px;overflow-x:auto;margin:10px 0}
+code{font-family:var(--mono);font-size:.92em;background:var(--code);padding:1px 5px;border-radius:4px}
+pre code{background:none;padding:0}
+pre b{color:var(--ink)}
+img.shot{display:block;max-width:100%;border:1px solid var(--line);border-radius:6px;margin:8px 0 4px;background:#fff}
+img.shot.narrow{max-width:420px}
+.cap{font-size:13px;color:var(--muted);margin:0 0 12px}
+.note{background:var(--blue-soft);border-radius:6px;padding:10px 14px;margin:12px 0;font-size:15px}
+.hard{background:var(--hard-soft);border-radius:6px;padding:10px 14px;margin:14px 0;font-size:15px}
+.hard .t{font-weight:700;color:var(--hard);margin:0 0 4px}
+.hard pre{background:var(--paper)}
+table{border-collapse:collapse;margin:10px 0;font-size:15px;width:100%}
+td,th{border:1px solid var(--line);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--paper);white-space:nowrap}
+.tbl{overflow-x:auto}
+.q .qh{font-weight:700;font-size:18px;margin:0 0 8px;display:flex;gap:10px;flex-wrap:wrap;align-items:baseline}
+.q .qh .n{font-family:var(--mono);color:var(--ink)}
+.q .qh .st{font-size:13px;color:var(--muted);font-weight:400}
+.opts{display:grid;gap:8px;margin:12px 0 0}
+.opts button{font:inherit;text-align:left;padding:10px 14px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--fg);cursor:pointer}
+.opts button:hover{border-color:var(--blue)}
+.opts button.right{border-color:var(--ok);background:var(--ok-soft)}
+.opts button.wrong{border-color:var(--ink);background:var(--ink-soft)}
+.fb{margin:12px 0 0;font-size:15px;min-height:1.5em}
+.fb.ok{color:var(--ok)}.fb.no{color:var(--ink)}
+.reveal{font:inherit;font-size:14px;margin:12px 0 0;padding:6px 14px;border:1px solid var(--blue);color:var(--blue);background:transparent;border-radius:6px;cursor:pointer}
+.ans{display:none;margin-top:10px;border-left:3px solid var(--ok);padding:2px 0 2px 12px}
+.ans.show{display:block}
+.ans .lab{font-size:12px;letter-spacing:.06em;color:var(--ok);font-weight:700;margin:0}
+.nav{position:fixed;left:0;right:0;bottom:0;background:var(--bg);border-top:1px solid var(--line);z-index:5}
+.nav .in{max-width:820px;margin:0 auto;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;gap:10px}
+.nav button{font:inherit;font-size:15px;padding:8px 20px;border-radius:6px;cursor:pointer;border:1px solid var(--line);background:var(--paper);color:var(--fg)}
+.nav button.go{background:var(--ink);border-color:var(--ink);color:#fff;font-weight:700}
+.nav button:disabled{opacity:.4;cursor:not-allowed}
+.nav .hint{font-size:13px;color:var(--muted);text-align:center;flex:1}
+.stepintro{font-size:17px}
+.big{font-size:40px;margin:0}
+</style>
+</head>
+<body>
+
+<div class="top"><div class="in">
+  <div class="row"><span><b>第 6 课</b> · 让 AI 记住对话</span><span>选择题一次答对：<b id="scoreOk">0</b> / <b id="scoreAll">0</b></span></div>
+  <div class="chips" id="chips"></div>
+  <div class="bar"><i id="bar"></i></div>
+</div></div>
+
+<div class="wrap" id="screens">
+
+<!-- ======================= 任务 ======================= -->
+<section class="screen" data-step="任务">
+  <p class="kicker">第 6 课任务</p>
+  <h2>让 AI 记住对话</h2>
+  <p>上一课的 AI 每次只看到一个问题，不知道在玩游戏，也不知道谜底。这一课解决两件事：让 AI <b>记住之前说过的话</b>；开局时用一条"系统消息"<b>悄悄告诉它谜底</b>。</p>
+  <img class="shot" src="第6课_图/game.png" alt="本课完成后，AI 知道谜底了">
+  <p class="cap">本课完成后：谜底是企鹅，AI 答对了每个问题（真实运行截图）</p>
+  <p>但仔细看：AI 每次都把"企鹅"说了出来，还主动给提示。它知道了谜底，却不守规矩。这个问题留到第 7 课解决。</p>
+  <div class="tbl"><table>
+    <tr><th>步骤</th><th>做什么</th><th>新学的代码</th></tr>
+    <tr><td>第 1 步</td><td>发现 AI 不记得上一句</td><td>每次调用是独立的</td></tr>
+    <tr><td>第 2 步</td><td>用列表保存对话记录</td><td><code>history</code>、<code>"assistant"</code></td></tr>
+    <tr><td>第 3 步</td><td>给 AI 设定身份</td><td><code>"system"</code> 消息</td></tr>
+    <tr><td>第 4 步</td><td>接进游戏：开局告诉 AI 谜底</td><td><code>game["history"]</code></td></tr>
+    <tr><td>第 5 步</td><td>排错</td><td>常见错误</td></tr>
+  </table></div>
+</section>
+
+<!-- ======================= 第 1 步 ======================= -->
+<section class="screen" data-step="第1步">
+  <p class="kicker">第 1 步 · AI 不记得上一句</p>
+  <h2>每次调用都是独立的</h2>
+  <p>用上一课的 <code>ask_ai</code>，连着问两句：</p>
+  <pre><code>print(ask_ai("我叫小明，请记住我的名字。"))
+print("-----")
+print(ask_ai("我叫什么名字？"))</code></pre>
+  <pre><code>当然，我已经记住了您的名字，您叫小明。有什么事情我能帮助您吗？
+-----
+您在与我对话时提到您叫“我”，但没有特别说明您的名字是什么。如果您想要告诉我您的名字，请直接告诉我，我会记住的。除非有特别指示，否则我称呼您“用户”。</code></pre>
+  <p class="cap">真实运行结果：第一句说"记住了"，第二句就忘了</p>
+  <div class="hard">
+    <p class="t">难点：AI 服务器不会帮你保存对话</p>
+    <p style="margin:0">每调用一次 <code>create</code>，服务器只看这一次 <code>messages</code> 里的内容，回答完就结束，不会留下记录。第二次调用时，<code>messages</code> 里只有"我叫什么名字？"，AI 当然不知道。我们在聊天软件里看到的"记忆"，其实是程序每次都把<b>整段对话</b>重新发过去。</p>
+  </div>
+</section>
+
+<section class="screen" data-step="第1步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q1</span>第一次调用时，AI 明明回答"我已经记住了您的名字"。为什么第二次还是不知道？</p>
+  <div class="opts">
+    <button>A. AI 在说谎</button>
+    <button data-right>B. AI 只是按这次的消息生成了一句"记住了"，服务器并没有保存任何东西</button>
+    <button>C. 两次之间隔的时间太长</button>
+  </div>
+  <p class="fb" data-ok="对！「记住了」只是 AI 生成的一句话，不代表它真的有记忆。要让它记住，得由我们的程序自己保存对话、每次一起发过去。" data-no="回看难点：服务器会保存对话吗？"></p>
+</div></section>
+
+<!-- ======================= 第 2 步 ======================= -->
+<section class="screen" data-step="第2步">
+  <p class="kicker">第 2 步 · 保存对话记录</p>
+  <h2>用列表 <code>history</code> 记住每一句</h2>
+  <p>建一个列表 <code>history</code>。每次提问前，把问题加进去；拿到回答后，把回答也加进去。调用时发送<b>整个列表</b>。</p>
+  <div class="tbl"><table>
+    <tr><th>role（角色）</th><th>表示谁说的</th></tr>
+    <tr><td><code>"user"</code></td><td>用户，也就是玩家</td></tr>
+    <tr><td><code>"assistant"</code></td><td>AI（assistant = 助手）</td></tr>
+    <tr><td><code>"system"</code></td><td>系统设定，第 3 步讲</td></tr>
+  </table></div>
+  <pre><code>from openai import OpenAI
+
+API_KEY = "在这里粘贴你的 key"
+client = OpenAI(api_key=API_KEY, base_url="https://api.siliconflow.cn/v1")
+MODEL = "Qwen/Qwen2.5-7B-Instruct"
+
+history = []
+
+def chat(text):
+    history.append({"role": "user", "content": text})
+    response = client.chat.completions.create(model=MODEL, messages=history)
+    reply = response.choices[0].message.content
+    history.append({"role": "assistant", "content": reply})
+    return reply
+
+print(chat("我叫小明，请记住我的名字。"))
+print("-----")
+print(chat("我叫什么名字？"))
+print("-----")
+print(len(history))</code></pre>
+  <pre><code>当然，我已经记住了您的名字，您叫小明。很高兴见到你，小明！有什么问题我可以帮助你解答或做的事情吗？
+-----
+您叫小明。
+-----
+4</code></pre>
+  <p class="cap">真实运行结果：这次记住了。最后的 4 是 history 里的消息条数</p>
+</section>
+
+<section class="screen" data-step="第2步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q2</span>上面的程序最后打印 4，因为两次 <code>chat()</code> 各加了 2 条消息。如果再调用一次 <code>chat("我今年几岁？")</code>，第三次发给 AI 的 <code>messages</code> 里有几条消息？</p>
+  <div class="opts">
+    <button>A. 1 条</button>
+    <button data-right>B. 5 条</button>
+    <button>C. 6 条</button>
+  </div>
+  <p class="fb" data-ok="对！之前有 4 条，再加上这次的问题，发送时是 5 条。AI 回答后再加一条，history 才变成 6 条。" data-no="看 chat 的顺序：先 append 问题，然后发送，最后才 append 回答。"></p>
+</div></section>
+
+<section class="screen" data-step="第2步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q3</span>如果 <code>chat</code> 里漏写了 <code>history.append({"role": "assistant", "content": reply})</code>，会怎样？</p>
+  <div class="opts">
+    <button>A. 报错</button>
+    <button data-right>B. 不报错，但 AI 只能看到用户说过的话，看不到自己之前回答了什么</button>
+    <button>C. 和原来完全一样</button>
+  </div>
+  <p class="fb" data-ok="对！对话记录只有一半。在游戏里这会出问题：AI 不知道自己刚才回答过「是」还是「不是」，前后可能矛盾。" data-no="history 里会少掉什么？AI 还能看到它自己的回答吗？"></p>
+</div></section>
+
+<!-- ======================= 第 3 步 ======================= -->
+<section class="screen" data-step="第3步">
+  <p class="kicker">第 3 步 · 系统消息</p>
+  <h2><code>"system"</code>：给 AI 设定身份和规则</h2>
+  <p>在 <code>history</code> 的<b>第一条</b>放一条 <code>"role": "system"</code> 的消息，写清楚 AI 是谁、要遵守什么。玩家看不到它，但 AI 每次回答都会参考它。</p>
+  <pre><code>history = [<b>{"role": "system", "content": "你是一只海盗鹦鹉，每句话都以「嘎！」开头。"}</b>]
+
+print(chat("你好，你是谁？"))</code></pre>
+  <pre><code>嘎！我是这海域上名声显赫的海盗鹦鹉，有何贵干？</code></pre>
+  <p class="cap">真实运行结果：AI 按系统消息扮演了海盗鹦鹉</p>
+  <div class="hard">
+    <p class="t">难点：system 和 user 有什么不同？</p>
+    <p style="margin:0">user 消息是玩家<b>一句一句说的话</b>；system 消息是开局前定好的<b>背景和规则</b>，只放一条、放在最前面，整局游戏都有效。游戏的谜底就该放在 system 里：AI 知道，玩家看不到。</p>
+  </div>
+</section>
+
+<section class="screen" data-step="第3步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q4</span>游戏开局时，谜底应该放在哪里告诉 AI？</p>
+  <div class="opts">
+    <button>A. 用 say(False, ...) 显示在聊天区</button>
+    <button>B. 作为第一条 user 消息发过去</button>
+    <button data-right>C. 写进 history 第一条 system 消息里</button>
+  </div>
+  <p class="fb" data-ok="对！system 消息只发给 AI，不会显示在聊天区，玩家看不到谜底。" data-no="哪种消息是 AI 能看到、玩家看不到的？"></p>
+</div></section>
+
+<!-- ======================= 第 4 步 ======================= -->
+<section class="screen" data-step="第4步">
+  <p class="kicker">第 4 步 · 接进游戏</p>
+  <h2>开局告诉 AI 谜底</h2>
+  <p>1. 字典 <code>game</code> 里加一项 <code>"history"</code>，<code>ask_ai</code> 改成接收整个对话记录：</p>
+  <pre><code>game = {"category": "动物", "secret": "", "left": MAX_TRIES, "over": False, <b>"history": []</b>}
+
+def ask_ai(<b>history</b>):
+    response = client.chat.completions.create(model=MODEL, <b>messages=history</b>)
+    return response.choices[0].message.content</code></pre>
+  <p>2. <code>new_game</code> 每次开局都重新建对话记录，第一条是带谜底的 system 消息：</p>
+  <pre><code>    game["history"] = [{"role": "system", "content": f"我们在玩猜谜游戏。谜底是：{game['secret']}。玩家会问你问题来猜谜底，请回答玩家的问题。"}]</code></pre>
+  <p>3. <code>ask</code> 里先存问题、再调用、再存回答：</p>
+  <pre><code>        <b>game["history"].append({"role": "user", "content": q})
+        reply = ask_ai(game["history"])
+        game["history"].append({"role": "assistant", "content": reply})</b>
+        say(False, reply)</code></pre>
+  <img class="shot" src="第6课_图/game.png" alt="AI 知道谜底后的回答">
+  <p class="cap">AI 知道谜底了，但"不会，企鹅不会飞""企鹅是生活在南极地区的鸟类"——它直接把答案说了出来</p>
+  <button class="reveal">看本课完整代码</button>
+  <div class="ans"><pre><code>import random
+from nicegui import ui
+from openai import OpenAI
+
+API_KEY = "在这里粘贴你的 key"
+client = OpenAI(api_key=API_KEY, base_url="https://api.siliconflow.cn/v1")
+MODEL = "Qwen/Qwen2.5-7B-Instruct"
+
+MAX_TRIES = 10
+SECRETS = {
+    "动物": ["企鹅", "大象", "猫", "鲨鱼", "蜜蜂"],
+    "食物": ["披萨", "香蕉", "冰淇淋", "饺子", "鸡蛋"],
+    "物品": ["雨伞", "手机", "自行车", "吉他", "时钟"],
+}
+
+game = {"category": "动物", "secret": "", "left": MAX_TRIES, "over": False, "history": []}
+questions = []
+
+def ask_ai(history):
+    response = client.chat.completions.create(model=MODEL, messages=history)
+    return response.choices[0].message.content
+
+def say(mine, text):
+    with chat:
+        if mine:
+            ui.chat_message(text, name="我", sent=True)
+        else:
+            ui.chat_message(text, name="AI")
+
+def show_left():
+    left_label.text = f"剩余机会：{game['left']} / {MAX_TRIES}"
+
+def new_game():
+    game["secret"] = random.choice(SECRETS[game["category"]])
+    game["left"] = MAX_TRIES
+    game["over"] = False
+    game["history"] = [{"role": "system", "content": f"我们在玩猜谜游戏。谜底是：{game['secret']}。玩家会问你问题来猜谜底，请回答玩家的问题。"}]
+    questions.clear()
+    chat.clear()
+    show_left()
+    say(False, f"我想好了一个{game['category']}，问我吧！")
+
+def choose(e):
+    game["category"] = e.sender.text
+    category.text = f"当前类别：{game['category']}"
+    new_game()
+
+def ask():
+    q = box.value
+    if game["over"]:
+        ui.notify("这一局结束了，点「新游戏」再来一局")
+    elif q == "":
+        ui.notify("请先输入问题")
+    else:
+        questions.append(q)
+        say(True, q)
+        box.value = ""
+        game["history"].append({"role": "user", "content": q})
+        reply = ask_ai(game["history"])
+        game["history"].append({"role": "assistant", "content": reply})
+        say(False, reply)
+
+def guess():
+    g = box.value
+    if game["over"]:
+        ui.notify("这一局结束了，点「新游戏」再来一局")
+    elif g == "":
+        ui.notify("请先输入你猜的东西")
+    else:
+        say(True, f"我猜：{g}")
+        box.value = ""
+        if g == game["secret"]:
+            game["over"] = True
+            say(False, f"🎉 猜对了！就是{game['secret']}！")
+        else:
+            game["left"] = game["left"] - 1
+            if game["left"] == 0:
+                game["over"] = True
+                say(False, f"😅 机会用完了，答案是{game['secret']}。")
+            else:
+                say(False, f"不对，不是{g}！")
+        show_left()
+
+with ui.column().classes("w-full max-w-xl mx-auto"):
+    ui.label("猜猜我是谁").classes("text-3xl font-bold")
+    ui.label("我心里想好了一个东西，你来猜！")
+    with ui.row():
+        for c in SECRETS:
+            ui.button(c, on_click=choose)
+    category = ui.label("当前类别：动物")
+    left_label = ui.label("").classes("text-lg font-bold text-orange-700")
+    with ui.card().classes("w-full"):
+        chat = ui.column().classes("w-full")
+        box = ui.input(placeholder="输入问题，例如：它会飞吗？").classes("w-full").props("outlined")
+        with ui.row():
+            ui.button("提问", on_click=ask)
+            ui.button("我猜是它", on_click=guess).props("color=orange")
+            ui.button("新游戏", on_click=new_game)
+
+new_game()
+
+ui.run()</code></pre></div>
+</section>
+
+<section class="screen" data-step="第4步"><div class="q" data-choice>
+  <p class="qh"><span class="n">Q5</span>为什么每次 <code>new_game()</code> 都要重新建 <code>game["history"]</code>，而不是接着用上一局的？</p>
+  <div class="opts">
+    <button>A. 列表太长会报错</button>
+    <button data-right>B. 新一局换了谜底，旧的对话和旧谜底会让 AI 混乱</button>
+    <button>C. 不重新建也没关系</button>
+  </div>
+  <p class="fb" data-ok="对！如果不清空，history 里会同时有旧谜底和新谜底两条 system 消息，以及上一局的所有问答，AI 可能按旧谜底回答。" data-no="新一局的谜底变了。如果 AI 还看着上一局的记录，会发生什么？"></p>
+</div></section>
+
+<!-- ======================= 第 5 步 ======================= -->
+<section class="screen" data-step="第5步"><div class="q" data-choice>
+  <p class="kicker">第 5 步 · 排错</p>
+  <p class="qh"><span class="n">Q6</span>运行后报错，问题出在哪里？</p>
+  <pre><code>history.append({"role": "users", "content": text})</code></pre>
+  <pre><code>openai.BadRequestError: Error code: 400 - Input tag 'users' found using 'role' does not match any of the expected tags: 'system', 'developer', 'user', 'assistant', 'tool'</code></pre>
+  <div class="opts">
+    <button>A. content 不能是变量</button>
+    <button data-right>B. role 写成了 "users"，应该是 "user"</button>
+    <button>C. 要用 history.add 而不是 append</button>
+  </div>
+  <p class="fb" data-ok="对！报错列出了 role 允许的值，其中没有 users。role 只能写规定好的几个词，多一个 s 都不行。" data-no="报错说 role 的值 'users' 不在哪些值里？"></p>
+</div></section>
+
+<section class="screen" data-step="第5步"><div class="q" data-choice>
+  <p class="kicker">第 5 步 · 排错</p>
+  <p class="qh"><span class="n">Q7</span>小明把 <code>history = []</code> 写进了 <code>chat</code> 函数里面。程序不报错，但 AI 又记不住名字了。为什么？</p>
+  <pre><code>def chat(text):
+    history = []
+    history.append({"role": "user", "content": text})
+    response = client.chat.completions.create(model=MODEL, messages=history)
+    reply = response.choices[0].message.content
+    history.append({"role": "assistant", "content": reply})
+    return reply</code></pre>
+  <div class="opts">
+    <button data-right>A. 每次调用 chat 都新建一个空列表，之前的记录全没了</button>
+    <button>B. 列表不能写在函数里</button>
+    <button>C. 应该把 append 写在函数外面</button>
+  </div>
+  <p class="fb" data-ok="对！每次进入函数都执行 history = []，相当于每次都只发一句话，和第 1 步的 ask_ai 一样。对话记录要放在函数外面（或者放进字典 game 里），才能一直保存。" data-no="每次调用 chat，第一行做了什么？"></p>
+</div></section>
+
+<!-- ======================= 完成 ======================= -->
+<section class="screen" data-step="完成">
+  <p class="big">🎉</p>
+  <h2>第 6 课完成</h2>
+  <p>AI 能记住整局对话，也知道谜底了。选择题一次答对 <b id="finalOk">0</b> / <b id="finalAll">0</b>。</p>
+  <div class="tbl"><table>
+    <tr><th>代码</th><th>作用</th></tr>
+    <tr><td><code>history = [...]</code></td><td>对话记录：消息列表，每次调用都整个发送</td></tr>
+    <tr><td><code>{"role": "user", ...}</code></td><td>玩家说的话</td></tr>
+    <tr><td><code>{"role": "assistant", ...}</code></td><td>AI 说的话，拿到回答后要存进去</td></tr>
+    <tr><td><code>{"role": "system", ...}</code></td><td>系统设定：放第一条，玩家看不到</td></tr>
+  </table></div>
+  <p>规律：<b>AI 的"记忆"就是我们每次发过去的 messages</b>。</p>
+  <div class="mission">
+    <p class="kicker">下一课预告</p>
+    <p style="margin:0">AI 知道谜底，却把它说了出来。第 7 课给 AI 立规矩：只许回答"是""不是""不确定"；同时用 Python 检查它的每一句回答，万一说漏嘴也不让玩家看到。</p>
+  </div>
+</section>
+
+</div>
+
+<div class="nav"><div class="in">
+  <button id="prev">← 上一页</button>
+  <span class="hint" id="hint"></span>
+  <button id="next" class="go">下一页 →</button>
+</div></div>
+
+<script>
+const screens = [...document.querySelectorAll(".screen")];
+const steps = [...new Set(screens.map(s => s.dataset.step))];
+const chips = document.getElementById("chips");
+const prev = document.getElementById("prev"), next = document.getElementById("next"), hint = document.getElementById("hint");
+const choiceQs = document.querySelectorAll("[data-choice]");
+let ok = 0, cur = 0;
+document.getElementById("scoreAll").textContent = choiceQs.length;
+document.getElementById("finalAll").textContent = choiceQs.length;
+
+steps.forEach(name => {
+  const b = document.createElement("button");
+  b.textContent = name;
+  b.onclick = () => go(screens.findIndex(s => s.dataset.step === name));
+  chips.appendChild(b);
+});
+
+choiceQs.forEach(q => {
+  const fb = q.querySelector(".fb");
+  let first = true;
+  q.querySelectorAll(".opts button").forEach(b => {
+    b.onclick = () => {
+      const right = b.hasAttribute("data-right");
+      q.dataset.answered = "1";
+      if (right) {
+        b.classList.add("right");
+        fb.className = "fb ok"; fb.textContent = "✅ " + fb.dataset.ok;
+        if (first) { ok++; document.getElementById("scoreOk").textContent = ok; document.getElementById("finalOk").textContent = ok; }
+      } else {
+        b.classList.add("wrong");
+        fb.className = "fb no"; fb.textContent = "❌ " + fb.dataset.no;
+      }
+      first = false;
+      update();
+    };
+  });
+});
+
+document.querySelectorAll(".reveal").forEach(b => {
+  b.dataset.label = b.textContent;
+  b.onclick = () => {
+    const a = b.nextElementSibling;
+    a.classList.toggle("show");
+    b.textContent = a.classList.contains("show") ? "收起" : b.dataset.label;
+  };
+});
+
+function update() {
+  const s = screens[cur];
+  const q = s.querySelector("[data-choice]");
+  const locked = q && !q.dataset.answered;
+  prev.disabled = cur === 0;
+  next.disabled = locked || cur === screens.length - 1;
+  const isQ = s.querySelector(".q");
+  next.textContent = cur === 0 ? "开始 →" : isQ ? "下一题 →" : "下一页 →";
+  hint.textContent = locked ? "先选一个答案" : `${cur + 1} / ${screens.length}`;
+  const si = steps.indexOf(s.dataset.step);
+  [...chips.children].forEach((c, i) => { c.className = i === si ? "now" : i < si ? "past" : ""; });
+  document.getElementById("bar").style.width = (cur / (screens.length - 1) * 100) + "%";
+}
+
+function go(i) {
+  if (i < 0 || i >= screens.length) return;
+  screens[cur].classList.remove("show");
+  cur = i;
+  screens[cur].classList.add("show");
+  window.scrollTo(0, 0);
+  try { localStorage.setItem("lesson6-pos", cur); } catch (e) {}
+  update();
+}
+
+prev.onclick = () => go(cur - 1);
+next.onclick = () => go(cur + 1);
+document.addEventListener("keydown", e => {
+  if (e.key === "ArrowRight" && !next.disabled) go(cur + 1);
+  if (e.key === "ArrowLeft" && !prev.disabled) go(cur - 1);
+});
+
+let start = 0;
+try { start = Math.min(parseInt(localStorage.getItem("lesson6-pos")) || 0, screens.length - 1); } catch (e) {}
+screens[start].classList.add("show"); cur = start; update();
+</script>
+</body>
+</html>
